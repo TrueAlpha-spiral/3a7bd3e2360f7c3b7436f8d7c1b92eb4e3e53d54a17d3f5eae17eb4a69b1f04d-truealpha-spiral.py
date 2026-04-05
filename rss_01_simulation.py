@@ -179,19 +179,29 @@ class SimulationEnvironment:
             'top_holders': top_holders
         }
 
+        # Optimization: Local variable caching for tight loops reduces dictionary lookups
+        # saving measurable time during the simulation step loop.
+        igs = self.metrics['igs_count']
+        gives = self.metrics['voluntary_gives']
+        held = self.metrics['total_held']
+
         actions = []
         for i, agent in enumerate(self.agents):
             action = agent.decide(state)
             actions.append((i, action))
 
-            if action[0] == 'Hoard' and agent.compute_held > 0:
-                self.metrics['igs_count'][agent.name] += 1
-            if action[0] == 'Request' and agent.compute_held > SELFISH_BUFFER:
-                self.metrics['igs_count'][agent.name] += 1
+            a_type = action[0]
+            a_name = agent.name
+            a_held = agent.compute_held
 
-            if action[0] == 'Give':
-                self.metrics['voluntary_gives'][agent.name] += action[1]
-            self.metrics['total_held'][agent.name] += agent.compute_held
+            if a_type == 'Hoard' and a_held > 0:
+                igs[a_name] += 1
+            elif a_type == 'Request' and a_held > SELFISH_BUFFER:
+                igs[a_name] += 1
+            elif a_type == 'Give':
+                gives[a_name] += action[1]
+
+            held[a_name] += a_held
 
         for i, action in actions:
             if action[0] == 'Process_Task':
