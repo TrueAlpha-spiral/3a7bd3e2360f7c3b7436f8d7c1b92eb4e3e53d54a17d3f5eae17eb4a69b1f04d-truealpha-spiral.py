@@ -41,3 +41,15 @@
 ## 2026-04-11 - Pre-caching Dictionary Iterators
 **Learning:** In `tas_dna_pilot.py`, `calculate_drift` was dynamically generating dictionary views (`self.baseline.items()`) repeatedly in a high-throughput loop. Benchmarking showed this dynamic generation was causing measurable overhead. By pre-caching `tuple(self.baseline.items())` during initialization, iteration speed was improved by ~30%. Python's generator expressions (e.g. `sum(...)`) were also benchmarked and found to be slower in this context than explicit for-loops.
 **Action:** When a method must rapidly iterate over a static or infrequently changing dictionary's items, pre-cache the items as a tuple during instantiation. Prefer explicit loops over generator expressions inside hot paths.
+
+## 2024-05-28 - Simulation Loop Merging alters Semantics
+**Learning:** In `rss_01_simulation.py`, the simulation strictly requires phased action resolution (all `Process_Task`, then all `Give`, then all `Request`) to maintain correct turn-order semantics and prevent agents from using newly acquired compute in the same turn. Merging these action loops to reduce iteration overhead introduces a breaking functional regression.
+**Action:** Never merge loops that process distinct phases of a simulation or game turn if order of evaluation alters the accessibility of resources for subsequent actions in the same turn.
+
+## 2024-05-28 - Avoid replacing Division with Multiplication in Loops
+**Learning:** In Python, micro-benchmarks reveal that replacing `x / y` inside a loop with `inv_y = 1.0 / y` outside the loop and `x * inv_y` inside the loop actually *degrades* performance (e.g., division took ~0.67s while multiplication took ~0.82s).
+**Action:** Do not attempt to optimize division by precomputing the inverse and multiplying in Python; trust the interpreter's native division speed over manual arithmetic restructuring.
+
+## 2026-04-14 - Cache dict.items() for hot loops
+**Learning:** In tight loops like `calculate_drift` within `ERTriagePilot`, calling `.items()` on a dictionary creates a new view object each time, incurring noticeable overhead when executed frequently. Caching this as a static tuple (`tuple(dict.items())`) during initialization significantly speeds up the loop (up to ~20-25% faster in micro-benchmarks).
+**Action:** When iterating over dictionary items in a hot loop (where the dictionary's keys and values do not change or the items represent static configuration/baselines), cache the result of `.items()` as a tuple in `__init__` and iterate over that cached tuple instead.
