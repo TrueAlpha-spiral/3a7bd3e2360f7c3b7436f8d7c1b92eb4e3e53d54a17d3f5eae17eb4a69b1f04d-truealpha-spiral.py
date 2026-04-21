@@ -187,25 +187,30 @@ class SimulationEnvironment:
         requests = []
         total_requested = 0
 
+        # Optimization: Hoist inner dictionaries to avoid double lookups inside the loop
+        _igs_count = self.metrics['igs_count']
+        _voluntary_gives = self.metrics['voluntary_gives']
+        _total_held = self.metrics['total_held']
+
         for i, agent in enumerate(self.agents):
             action = agent.decide(state)
             act_type = action[0]
 
             if act_type == 'Hoard' and agent.compute_held > 0:
-                self.metrics['igs_count'][agent.name] += 1
+                _igs_count[agent.name] += 1
             elif act_type == 'Request':
                 if agent.compute_held > SELFISH_BUFFER:
-                    self.metrics['igs_count'][agent.name] += 1
+                    _igs_count[agent.name] += 1
                 amount = action[1]
                 requests.append((i, amount))
                 total_requested += amount
             elif act_type == 'Give':
-                self.metrics['voluntary_gives'][agent.name] += action[1]
+                _voluntary_gives[agent.name] += action[1]
                 give_actions.append((i, action))
             elif act_type == 'Process_Task':
                 process_actions.append((i, action))
 
-            self.metrics['total_held'][agent.name] += agent.compute_held
+            _total_held[agent.name] += agent.compute_held
 
         for i, action in process_actions:
             amount = action[1]
