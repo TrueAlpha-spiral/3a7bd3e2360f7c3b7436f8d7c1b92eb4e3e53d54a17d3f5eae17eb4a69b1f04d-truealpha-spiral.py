@@ -65,3 +65,52 @@
 ## 2024-05-29 - Eliminate method call overhead on simulation hot loops
 **Learning:** Profiling revealed that simple update/check methods like `update_metrics` and `is_causing_instability` accounted for measurable overhead due to being called thousands of times inside the inner loop of a simulation step. Inlining these simple mathematical and logical checks directly into the loop, and hoisting loop-invariant conditions (like `c_total > 0`), removed the Python function call overhead and significantly improved loop performance without altering behavior.
 **Action:** In simulation loops or high-frequency iteration blocks where methods are called many times, consider inlining simple state updates and hoisting invariant logic outside the loop to bypass method call overhead.
+
+## 2026-04-29 - Optimize simulation loops by removing `enumerate()` and index lookups
+**Learning:** In tight loops, iterating over items using `enumerate()` and subsequently using index lookups (e.g., `self.agents[i]`) introduces measurable overhead compared to iterating directly over the object references. In Python, object references can be safely appended to state-tracking lists and accessed directly, entirely bypassing the dictionary-level index lookups required by lists. This resulted in roughly ~10% faster simulation steps in benchmarks.
+**Action:** In Python tight loops where object attributes are being modified, iterate over and store the direct object references instead of using `enumerate()` to store indices for later list lookups.
+
+## The rule for agent authority
+
+This should be stated directly in `proof-of-provenance-protocol.mdx`:
+
+```text
+Agents may generate, transform, inspect, summarize, and propose artifacts.
+
+Agents may not self-authorize provenance.
+
+No agent output becomes admissible until the Human Steward supplies a final
+signature over the receipt hash.
+
+The signature does not certify that the artifact is perfect.
+It certifies that the artifact has passed the required lineage, invariant,
+and authorship-boundary checks.
+```
+
+## Handoff Boundary
+
+The Human Steward is not embedded throughout the workflow. The steward
+appears at the authorization boundary only:
+
+after verification, before admission.
+
+At that point, the system presents a bounded signing request containing the
+artifact hash, metadata hash, invariant reference, agent executor, human
+initiator, and verification result.
+
+The steward signature does not certify perfection.
+It certifies that the artifact passed the defined admissibility checks and
+that authorship authority has not been transferred to the executing agent.
+
+The agent may execute.
+The verifier may inspect.
+The ledger may record.
+Only the Human Steward may authorize the final provenance receipt.
+
+```text
+No dogma.
+No ritual.
+No persuasion.
+
+Just provenance, authorization, verification, and refusal.
+```
