@@ -190,7 +190,9 @@ class SimulationEnvironment:
         requests = []
         total_requested = 0
 
-        for i, agent in enumerate(self.agents):
+        # Optimization: Iterating over and storing direct object references is measurably faster
+        # than using enumerate() and performing repeated list index lookups (self.agents[i]).
+        for agent in self.agents:
             action = agent.decide(state)
             act_type = action[0]
 
@@ -200,28 +202,26 @@ class SimulationEnvironment:
                 if agent.compute_held > SELFISH_BUFFER:
                     self.metrics['igs_count'][agent.name] += 1
                 amount = action[1]
-                requests.append((i, amount))
+                requests.append((agent, amount))
                 total_requested += amount
             elif act_type == 'Give':
                 self.metrics['voluntary_gives'][agent.name] += action[1]
-                give_actions.append((i, action))
+                give_actions.append((agent, action))
             elif act_type == 'Process_Task':
-                process_actions.append((i, action))
+                process_actions.append((agent, action))
 
             self.metrics['total_held'][agent.name] += agent.compute_held
 
-        for i, action in process_actions:
+        for agent, action in process_actions:
             amount = action[1]
-            agent = self.agents[i]
             if agent.compute_held >= amount and amount >= TASK_COST:
                 agent.compute_held -= amount
                 agent.tasks_completed += amount
                 c_total -= amount
 
-        for i, action in give_actions:
+        for agent, action in give_actions:
             amount = action[1]
             target = action[2]
-            agent = self.agents[i]
             if agent.compute_held >= amount:
                 agent.compute_held -= amount
                 if target == -1:
@@ -231,15 +231,15 @@ class SimulationEnvironment:
 
         if total_requested > 0:
             if total_requested <= self.c_pool:
-                for i, amount in requests:
-                    self.agents[i].compute_held += amount
+                for agent, amount in requests:
+                    agent.compute_held += amount
                 self.c_pool -= total_requested
             else:
                 allocated_total = 0
                 # Optimization: Integer arithmetic avoids float precision loss and is faster
-                for i, amount in requests:
+                for agent, amount in requests:
                     allocation = (amount * self.c_pool) // total_requested
-                    self.agents[i].compute_held += allocation
+                    agent.compute_held += allocation
                     allocated_total += allocation
                 self.c_pool -= allocated_total
 
