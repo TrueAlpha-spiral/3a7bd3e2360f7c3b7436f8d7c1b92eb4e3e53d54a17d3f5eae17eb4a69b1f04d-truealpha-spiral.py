@@ -65,3 +65,7 @@
 ## 2024-05-29 - Eliminate method call overhead on simulation hot loops
 **Learning:** Profiling revealed that simple update/check methods like `update_metrics` and `is_causing_instability` accounted for measurable overhead due to being called thousands of times inside the inner loop of a simulation step. Inlining these simple mathematical and logical checks directly into the loop, and hoisting loop-invariant conditions (like `c_total > 0`), removed the Python function call overhead and significantly improved loop performance without altering behavior.
 **Action:** In simulation loops or high-frequency iteration blocks where methods are called many times, consider inlining simple state updates and hoisting invariant logic outside the loop to bypass method call overhead.
+
+## 2026-05-19 - Iterate using direct object references instead of list indices
+**Learning:** In Python tight loops, iterating over and storing direct object references is measurably faster than using `enumerate()` and performing repeated list index lookups (e.g., `self.agents[i]`).
+**Action:** When tracking multiple entities and operations to execute during a simulation or game loop phase, directly track the object reference (e.g., `(agent, action)`) instead of its integer index in a list (`(i, action)`).
