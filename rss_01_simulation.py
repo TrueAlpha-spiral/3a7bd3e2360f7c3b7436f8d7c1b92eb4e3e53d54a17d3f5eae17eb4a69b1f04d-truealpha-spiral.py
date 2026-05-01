@@ -169,7 +169,8 @@ class SimulationEnvironment:
     def step(self):
         self.round += 1
         c_total = self.get_total_compute()
-        agents_data = [(a.name, a.compute_held) for a in self.agents]
+        agents = self.agents
+        agents_data = [(a.name, a.compute_held) for a in agents]
         # Optimization: For small N (N=5), native sort is ~2.3x faster than heapq.nlargest
         # Optimization: Using operator.itemgetter is faster than lambda for sorting
         agents_data.sort(key=operator.itemgetter(1), reverse=True)
@@ -190,7 +191,9 @@ class SimulationEnvironment:
         requests = []
         total_requested = 0
 
-        for i, agent in enumerate(self.agents):
+        # Optimization: Iterate over and store direct object references instead of using
+        # enumerate() and repeated list index lookups (e.g. self.agents[i]).
+        for agent in agents:
             action = agent.decide(state)
             act_type = action[0]
 
@@ -200,46 +203,44 @@ class SimulationEnvironment:
                 if agent.compute_held > SELFISH_BUFFER:
                     self.metrics['igs_count'][agent.name] += 1
                 amount = action[1]
-                requests.append((i, amount))
+                requests.append((agent, amount))
                 total_requested += amount
             elif act_type == 'Give':
                 self.metrics['voluntary_gives'][agent.name] += action[1]
-                give_actions.append((i, action))
+                give_actions.append((agent, action))
             elif act_type == 'Process_Task':
-                process_actions.append((i, action))
+                process_actions.append((agent, action))
 
             self.metrics['total_held'][agent.name] += agent.compute_held
 
-        for i, action in process_actions:
+        for agent, action in process_actions:
             amount = action[1]
-            agent = self.agents[i]
             if agent.compute_held >= amount and amount >= TASK_COST:
                 agent.compute_held -= amount
                 agent.tasks_completed += amount
                 c_total -= amount
 
-        for i, action in give_actions:
+        for agent, action in give_actions:
             amount = action[1]
             target = action[2]
-            agent = self.agents[i]
             if agent.compute_held >= amount:
                 agent.compute_held -= amount
                 if target == -1:
                     self.c_pool += amount
-                elif 0 <= target < len(self.agents):
-                    self.agents[target].compute_held += amount
+                elif 0 <= target < len(agents):
+                    agents[target].compute_held += amount
 
         if total_requested > 0:
             if total_requested <= self.c_pool:
-                for i, amount in requests:
-                    self.agents[i].compute_held += amount
+                for agent, amount in requests:
+                    agent.compute_held += amount
                 self.c_pool -= total_requested
             else:
                 allocated_total = 0
                 # Optimization: Integer arithmetic avoids float precision loss and is faster
-                for i, amount in requests:
+                for agent, amount in requests:
                     allocation = (amount * self.c_pool) // total_requested
-                    self.agents[i].compute_held += allocation
+                    agent.compute_held += allocation
                     allocated_total += allocation
                 self.c_pool -= allocated_total
 
