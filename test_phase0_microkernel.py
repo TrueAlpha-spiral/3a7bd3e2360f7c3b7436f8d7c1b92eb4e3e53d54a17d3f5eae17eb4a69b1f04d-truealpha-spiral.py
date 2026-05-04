@@ -101,5 +101,112 @@ class TestSplitTrustEnforcement(unittest.TestCase):
         self.assertFalse(guard_accepts_token(token, self.signing_key, used))
 
 
+from unittest.mock import patch
+
+class TestGuardAcceptsTokenAdversarial(unittest.TestCase):
+    def setUp(self):
+        self.signing_key = "test-secret"
+
+        # Valid baseline token shape (before signature)
+        self.valid_unsigned = {
+            "status": "ALLOW_TOKEN_ISSUED",
+            "proposal_id": "p1",
+            "proposal_digest": "digest",
+            "nonce": "n1",
+            "counter": 1,
+            "expires_in_seconds": 30,
+            "one_shot": True,
+            "token_hash": "hash"
+        }
+
+    def _sign(self, token_dict):
+        from tas_phase0_microkernel import sign_payload
+        return sign_payload(token_dict, self.signing_key)
+
+    @patch("tas_phase0_microkernel.sign_payload")
+    def test_replayed_counter_rejected_before_crypto(self, mock_sign):
+        """1. Replayed counter is rejected before signature validation."""
+        token = dict(self.valid_unsigned)
+        token["signature"] = self._sign(token)
+        used_counters = {1}
+
+        mock_sign.reset_mock() # Reset mock after setup call to sign_payload
+        result = guard_accepts_token(token, self.signing_key, used_counters)
+
+        self.assertFalse(result)
+        mock_sign.assert_not_called()
+
+    @patch("tas_phase0_microkernel.sign_payload")
+    def test_missing_one_shot_rejected_before_crypto(self, mock_sign):
+        """2. Missing or false one_shot is rejected before signature validation."""
+        token = dict(self.valid_unsigned)
+        token["one_shot"] = False
+        token["signature"] = self._sign(token)
+        used_counters = set()
+
+        mock_sign.reset_mock() # Reset mock after setup call to sign_payload
+        result = guard_accepts_token(token, self.signing_key, used_counters)
+
+        self.assertFalse(result)
+        mock_sign.assert_not_called()
+
+    @patch("tas_phase0_microkernel.sign_payload")
+    def test_null_token_rejected_before_crypto(self, mock_sign):
+        """3. Null/empty token is rejected before signature validation."""
+        used_counters = set()
+
+        result1 = guard_accepts_token(None, self.signing_key, used_counters)
+        result2 = guard_accepts_token({}, self.signing_key, used_counters)
+
+        self.assertFalse(result1)
+        self.assertFalse(result2)
+        mock_sign.assert_not_called()
+
+    @patch("tas_phase0_microkernel.sign_payload")
+    def test_unsigned_malformed_reaches_crypto(self, mock_sign):
+        """4. Valid-looking but unsigned malformed token still reaches signature validation only after passing cheap preconditions."""
+        # Setup mock to fail signature validation
+        mock_sign.return_value = "different_signature"
+
+        token = dict(self.valid_unsigned)
+        token["signature"] = "fake_signature"
+        used_counters = set()
+
+        result = guard_accepts_token(token, self.signing_key, used_counters)
+
+        self.assertFalse(result)
+        mock_sign.assert_called_once()
+
+    def test_used_counters_not_mutated_on_rejection(self):
+        """5. used_counters is not mutated on any rejected token."""
+        # Fail on one_shot
+        token = dict(self.valid_unsigned)
+        token["one_shot"] = False
+        token["signature"] = self._sign(token)
+        used_counters = {2}
+        result = guard_accepts_token(token, self.signing_key, used_counters)
+        self.assertFalse(result)
+        self.assertEqual(used_counters, {2})
+
+        # Fail on signature
+        token = dict(self.valid_unsigned)
+        token["signature"] = "fake"
+        used_counters = {2}
+        result = guard_accepts_token(token, self.signing_key, used_counters)
+        self.assertFalse(result)
+        self.assertEqual(used_counters, {2})
+
+    def test_used_counters_mutated_on_success(self):
+        """6. used_counters is mutated only after full signature validation succeeds."""
+        token = dict(self.valid_unsigned)
+        token["signature"] = self._sign(token)
+        used_counters = {2}
+
+        result = guard_accepts_token(token, self.signing_key, used_counters)
+
+        self.assertTrue(result)
+        self.assertEqual(used_counters, {1, 2})
+
+
 if __name__ == "__main__":
     unittest.main()
