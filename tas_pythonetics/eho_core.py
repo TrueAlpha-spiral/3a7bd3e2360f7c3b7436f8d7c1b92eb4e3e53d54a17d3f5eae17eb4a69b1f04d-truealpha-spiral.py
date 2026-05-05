@@ -5,6 +5,7 @@ It enforces continuous measurement of ethical drift and requires verification of
 source, scope, lineage, authority, and admissibility.
 """
 
+import math
 from typing import Dict, Any, Tuple
 
 EHO_PASSED = "EHO_ADMISSIBLE"
@@ -28,7 +29,7 @@ class EthicalHamiltonian:
         authority, and admissibility before execution.
         """
         for key in self.provenance_keys:
-            if key not in context or not context[key]:
+            if not context.get(key):
                 return False
         return True
 
@@ -42,7 +43,6 @@ class EthicalHamiltonian:
         if coherence >= 1.0:
             return prior_drift
 
-        import math
         current_error = (1.0 - coherence) * math.exp(min(resonance, 50.0)) # cap resonance to avoid overflow here
         return prior_drift + (current_error * (1.0 + prior_drift))
 
