@@ -12,6 +12,8 @@ from tas_phase0_microkernel import ALLOW_STATUS, DENY_STATUS, VerificationPolicy
 
 class TestSDFTASCivicInterface(unittest.TestCase):
     def setUp(self):
+        # Test-only static signing keys. Production must use securely generated
+        # key material and hardened storage.
         self.witness_key = "sdf-witness-key"
         self.verifier_key = "tas-verifier-key"
         self.policy = VerificationPolicy(
@@ -25,18 +27,19 @@ class TestSDFTASCivicInterface(unittest.TestCase):
         self.portal = CitizenPortal(self.registry, self.gateway, self.guard)
         self.verifier = PublicVerifier(self.witness_key, self.verifier_key)
 
-    def test_full_7_step_transaction_success(self):
+    def test_full_seven_step_transaction_success(self):
         identity = self.portal.create_identity("Ada Sovereign")
         self.registry.register_identity(identity, metadata={"jurisdiction": "civic"})
 
         self.assertIn(identity.sovereign_id, self.registry.identity_registry)
         self.assertNotIn("private_key", self.registry.identity_registry[identity.sovereign_id])
+        self.assertTrue(self.portal.get_local_private_key(identity.sovereign_id))
 
         capsule = self.portal.package_epistemology(
             owner_id=identity.sovereign_id,
             claims=["Claim 1"],
             sources=["Source A"],
-            attestations=["Attestation α"],
+            attestations=["Attestation alpha"],
             consent_scope="public verification only",
             revocation_policy="prospective only",
         )
@@ -62,7 +65,7 @@ class TestSDFTASCivicInterface(unittest.TestCase):
             owner_id=identity.sovereign_id,
             claims=["Claim 2"],
             sources=["Source B"],
-            attestations=["Attestation β"],
+            attestations=["Attestation beta"],
             consent_scope="policy scoped",
             revocation_policy="immediate",
         )

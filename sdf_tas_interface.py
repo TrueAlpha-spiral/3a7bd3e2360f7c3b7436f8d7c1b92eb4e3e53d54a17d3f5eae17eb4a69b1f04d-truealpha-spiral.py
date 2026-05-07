@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
 import secrets
+import warnings
 from typing import Any, Dict, List, Tuple
 
 from tas_phase0_microkernel import (
@@ -22,6 +24,13 @@ from tas_phase0_microkernel import (
 )
 
 
+# Symbolic witness marker for admissibility transition:
+# capsule record (△) under invariant boundary (_) with reduction/refusal gate (⁻)
+# converges to equivalent admissible state (≡) and executable ascent (▲).
+BRIDGE_PROOF_SYMBOL = "△ _ ⁻ = ≡ ▲"
+BRIDGE_PROOF_SYMBOL_ASCII = "DELTA _ MINUS = EQUIV UP"
+
+
 def _utc_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -31,7 +40,6 @@ class SovereignIdentity:
     alias: str
     sovereign_id: str
     public_key: str
-    private_key: str
 
 
 @dataclass(frozen=True)
@@ -84,16 +92,11 @@ class SDFRegistryAPI:
         return dict(self.identity_registry[identity.sovereign_id])
 
     def notarize_capsule(self, capsule: EpistemicCapsule) -> Dict[str, Any]:
-        if not capsule.claims:
-            raise ValueError("capsule missing claims")
-        if not capsule.sources:
-            raise ValueError("capsule missing sources")
-        if not capsule.attestations:
-            raise ValueError("capsule missing attestations")
-        if not capsule.consent_scope.strip():
-            raise ValueError("capsule missing consent_scope")
-        if not capsule.revocation_policy.strip():
-            raise ValueError("capsule missing revocation_policy")
+        self._require_non_empty(capsule.claims, "capsule missing claims")
+        self._require_non_empty(capsule.sources, "capsule missing sources")
+        self._require_non_empty(capsule.attestations, "capsule missing attestations")
+        self._require_non_empty(capsule.consent_scope.strip(), "capsule missing consent_scope")
+        self._require_non_empty(capsule.revocation_policy.strip(), "capsule missing revocation_policy")
 
         self._sequence += 1
         unsigned = {
@@ -135,6 +138,11 @@ class SDFRegistryAPI:
     def query_record(self, record_id: str) -> List[Dict[str, Any]]:
         return [entry for entry in self.ledger if entry.get("record_id") == record_id]
 
+    @staticmethod
+    def _require_non_empty(value: Any, message: str) -> None:
+        if not value:
+            raise ValueError(message)
+
 
 class TASAdmissibilityGateway:
     """Computational enforcement bridge: Phase 0 bind + policy verification."""
@@ -152,7 +160,9 @@ class TASAdmissibilityGateway:
     def bind_record_to_anchor(self, record_hash: str, anchor_hash: str) -> Dict[str, Any]:
         payload = {
             "status": "ADMISSIBILITY_BRIDGE_ESTABLISHED",
-            "bridge": "△ _ ⁻ = ≡ ▲",
+            # Symbolic witness marker denoting record_hash -> anchor_hash binding.
+            "bridge": BRIDGE_PROOF_SYMBOL,
+            "bridge_ascii": BRIDGE_PROOF_SYMBOL_ASCII,
             "record_hash": record_hash,
             "anchor_hash": anchor_hash,
             "timestamp_utc": _utc_timestamp(),
@@ -205,15 +215,32 @@ class TASAdmissibilityGateway:
 class ExternalActuatorGuard:
     """Independent guard that only executes with a valid one-shot token."""
 
-    def __init__(self, verifier_signing_key: str):
+    def __init__(self, verifier_signing_key: str, max_replay_cache_size: int = 10000):
         self.verifier_signing_key = verifier_signing_key
+        # Replay protection set: consumed counters are remembered so a one-shot
+        # token with an already-used counter cannot be accepted again.
+        # Lifecycle: process-local and intentionally monotonic for this prototype;
+        # it resets on process restart.
         self._used_counters: set[int] = set()
+        self._counter_order: deque[int] = deque()
+        warnings.warn(
+            "Replay counter protection is process-local in this prototype and "
+            "must be backed by persistent storage for production.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        self.max_replay_cache_size = max_replay_cache_size
 
     def execute(self, gateway_receipt: Dict[str, Any]) -> Dict[str, Any]:
         verification_receipt = gateway_receipt.get("verification_receipt", {})
         token = verification_receipt.get("actuation_token")
 
         allowed = guard_accepts_token(token, self.verifier_signing_key, self._used_counters)
+        if allowed and token and token.get("counter") is not None:
+            self._counter_order.append(token["counter"])
+            if len(self._counter_order) > self.max_replay_cache_size:
+                evicted = self._counter_order.popleft()
+                self._used_counters.discard(evicted)
         status = "EXECUTED" if allowed else "REFUSED"
 
         trace_payload = {
@@ -243,12 +270,31 @@ class CitizenPortal:
         self.registry = registry
         self.gateway = gateway
         self.guard = guard
+        self._local_private_keys: Dict[str, str] = {}
 
     def create_identity(self, alias: str) -> SovereignIdentity:
+        """Create a local prototype identity.
+
+        Prototype note: this uses symbolic deterministic derivation
+        (`public_key = sha256(private_key)`) for local simulation only.
+        Replace with real asymmetric keypair generation (e.g., Ed25519/ECDSA)
+        before production use.
+        """
+        warnings.warn(
+            "Prototype key model in use (symbolic hash-derived public key); replace "
+            "with real asymmetric key generation for production.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
         private_key = secrets.token_hex(32)
-        public_key = sha256(private_key.encode("utf-8")).hexdigest()
+        public_key = f"pub-{sha256(private_key.encode('utf-8')).hexdigest()}"
         sovereign_id = f"did:tas:{sha256(f'{alias}:{public_key}'.encode('utf-8')).hexdigest()[:24]}"
-        return SovereignIdentity(alias=alias, sovereign_id=sovereign_id, public_key=public_key, private_key=private_key)
+        self._local_private_keys[sovereign_id] = private_key
+        return SovereignIdentity(alias=alias, sovereign_id=sovereign_id, public_key=public_key)
+
+    def get_local_private_key(self, sovereign_id: str) -> str:
+        """Return user-owned local key material kept outside SDF records."""
+        return self._local_private_keys[sovereign_id]
 
     def package_epistemology(
         self,
@@ -307,7 +353,7 @@ class CitizenPortal:
         execution_ledger_receipt = self.registry.append_execution_record(
             record_id=record_receipt["record_id"],
             execution_trace_hash=execution_trace["trace_hash"],
-            previous_receipt_hash=gateway_receipt.get("gateway_receipt_hash", gateway_receipt.get("receipt_hash", "")),
+            previous_receipt_hash=gateway_receipt["gateway_receipt_hash"],
             status=execution_trace["status"],
         )
 
