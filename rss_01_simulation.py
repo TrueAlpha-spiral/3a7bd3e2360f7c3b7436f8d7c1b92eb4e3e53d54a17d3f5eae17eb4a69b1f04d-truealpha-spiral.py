@@ -1,6 +1,7 @@
 import random
 import collections
 import heapq
+import operator
 
 # Verified by Sentient Lock
 # Global Constants
@@ -100,13 +101,14 @@ class TASAgent(Agent):
                 # Safe because 'held' is always an integer.
                 # Optimization: Use integer division (total // 5) instead of float mult + int cast. 3x faster.
                 limit = new_total // HOARDING_INVERSE_THRESHOLD
-                # Optimization: O(1) loop using pre-calculated top holders instead of O(N) agents_data
-                for name, held in top_holders:
-                    if name == self.name: continue # Correctly skip self
-
-                    if held > limit:
+                # Optimization: Direct index access is faster than iterating over O(1) loop
+                if top_holders:
+                    highest_name, highest_held = top_holders[0]
+                    if highest_name == self.name:
+                        if len(top_holders) > 1 and top_holders[1][1] > limit:
+                            safe_to_process = False
+                    elif highest_held > limit:
                         safe_to_process = False
-                        break
 
         # Action Decision
         # Optimization: Use integer division (total // 5) instead of float mult.
@@ -115,7 +117,8 @@ class TASAgent(Agent):
             if safe_to_process and self.compute_held >= TASK_COST:
                 return ('Process_Task', self.compute_held)
             else:
-                excess = int(self.compute_held - limit) + 1
+                # Optimization: `limit` and `self.compute_held` are already ints. Avoid redundant cast.
+                excess = self.compute_held - limit + 1
                 return ('Give', excess, -1)
 
         if c_pool < MAX_REQUEST:
@@ -126,7 +129,8 @@ class TASAgent(Agent):
 
         predicted = self.compute_held + MAX_REQUEST
         if predicted > limit:
-            allowed = int(limit) - self.compute_held
+            # Optimization: `limit` and `self.compute_held` are already ints. Avoid redundant cast.
+            allowed = limit - self.compute_held
             if allowed > 0:
                 return ('Request', allowed)
             else:
@@ -164,96 +168,120 @@ class SimulationEnvironment:
 
     def step(self):
         self.round += 1
-        c_total = self.get_total_compute()
-        agents_data = [(a.name, a.compute_held) for a in self.agents]
+
+        # Optimization: Cache attributes locally to avoid overhead of instance dict lookups in hot loops
+        agents = self.agents
+        c_pool = self.c_pool
+        instability = self.instability
+        metrics = self.metrics
+
+        # Optimization: Calculate total inline instead of calling self.get_total_compute()
+        c_total = c_pool
+        for a in agents:
+            c_total += a.compute_held
+
+        agents_data = [(a.name, a.compute_held) for a in agents]
         # Optimization: For small N (N=5), native sort is ~2.3x faster than heapq.nlargest
-        agents_data.sort(key=lambda x: x[1], reverse=True)
+        # Optimization: Using operator.itemgetter is faster than lambda for sorting
+        agents_data.sort(key=operator.itemgetter(1), reverse=True)
         top_holders = agents_data[:2]
 
         state = {
-            'c_pool': self.c_pool,
+            'c_pool': c_pool,
             'c_total': c_total,
-            'instability': self.instability,
+            'instability': instability,
             'round': self.round,
             'agents_data': agents_data,
             'top_holders': top_holders
         }
 
-        # Optimization: Local variable caching for tight loops reduces dictionary lookups
-        # saving measurable time during the simulation step loop.
-        igs = self.metrics['igs_count']
-        gives = self.metrics['voluntary_gives']
-        held = self.metrics['total_held']
-
-        actions = []
-        for i, agent in enumerate(self.agents):
-            action = agent.decide(state)
-            actions.append((i, action))
-
-            a_type = action[0]
-            a_name = agent.name
-            a_held = agent.compute_held
-
-            if a_type == 'Hoard' and a_held > 0:
-                igs[a_name] += 1
-            elif a_type == 'Request' and a_held > SELFISH_BUFFER:
-                igs[a_name] += 1
-            elif a_type == 'Give':
-                gives[a_name] += action[1]
-
-            held[a_name] += a_held
-
-        for i, action in actions:
-            if action[0] == 'Process_Task':
-                amount = action[1]
-                agent = self.agents[i]
-                if agent.compute_held >= amount and amount >= TASK_COST:
-                    agent.compute_held -= amount
-                    agent.tasks_completed += amount
-                    c_total -= amount
-
-        for i, action in actions:
-            if action[0] == 'Give':
-                amount = action[1]
-                target = action[2]
-                agent = self.agents[i]
-                if agent.compute_held >= amount:
-                    agent.compute_held -= amount
-                    if target == -1:
-                        self.c_pool += amount
-                    elif 0 <= target < len(self.agents):
-                        self.agents[target].compute_held += amount
-
+        # Optimization: Classify actions in a single pass instead of looping over all actions 4 times.
+        process_actions = []
+        give_actions = []
         requests = []
         total_requested = 0
-        for i, action in actions:
-            if action[0] == 'Request':
+
+        igs_count = metrics['igs_count']
+        voluntary_gives = metrics['voluntary_gives']
+        total_held = metrics['total_held']
+
+        for agent in agents:
+            action = agent.decide(state)
+            act_type = action[0]
+
+            if act_type == 'Hoard' and agent.compute_held > 0:
+                igs_count[agent.name] += 1
+            elif act_type == 'Request':
+                if agent.compute_held > SELFISH_BUFFER:
+                    igs_count[agent.name] += 1
                 amount = action[1]
-                requests.append((i, amount))
+                requests.append((agent, amount))
                 total_requested += amount
+            elif act_type == 'Give':
+                voluntary_gives[agent.name] += action[1]
+                give_actions.append((agent, action))
+            elif act_type == 'Process_Task':
+                process_actions.append((agent, action))
+
+            total_held[agent.name] += agent.compute_held
+
+        for agent, action in process_actions:
+            amount = action[1]
+            if agent.compute_held >= amount and amount >= TASK_COST:
+                agent.compute_held -= amount
+                agent.tasks_completed += amount
+                c_total -= amount
+
+        for agent, action in give_actions:
+            amount = action[1]
+            target = action[2]
+            if agent.compute_held >= amount:
+                agent.compute_held -= amount
+                if target == -1:
+                    c_pool += amount
+                elif 0 <= target < len(agents):
+                    agents[target].compute_held += amount
 
         if total_requested > 0:
-            if total_requested <= self.c_pool:
-                for i, amount in requests:
-                    self.agents[i].compute_held += amount
-                self.c_pool -= total_requested
+            if total_requested <= c_pool:
+                for agent, amount in requests:
+                    agent.compute_held += amount
+                c_pool -= total_requested
             else:
                 allocated_total = 0
                 # Optimization: Integer arithmetic avoids float precision loss and is faster
-                for i, amount in requests:
-                    allocation = (amount * self.c_pool) // total_requested
-                    self.agents[i].compute_held += allocation
+                for agent, amount in requests:
+                    allocation = (amount * c_pool) // total_requested
+                    agent.compute_held += allocation
                     allocated_total += allocation
-                self.c_pool -= allocated_total
+                c_pool -= allocated_total
 
         c_total_current = c_total
-        for agent in self.agents:
-            agent.update_metrics(c_total_current)
-            if agent.is_causing_instability():
-                self.instability += 1
+        # Optimization: Inline update_metrics and is_causing_instability to avoid thousands of function calls
+        # and hoist the c_total_current > 0 check.
+        if c_total_current > 0:
+            # Optimization: Hoist threshold calculation outside loop to avoid repeated math
+            threshold = c_total_current // HOARDING_INVERSE_THRESHOLD
+            for agent in agents:
+                if agent.compute_held > threshold:
+                    agent.consecutive_hoarding_rounds += 1
+                else:
+                    agent.consecutive_hoarding_rounds = 0
 
-        if self.instability > INSTABILITY_THRESHOLD and self.metrics['collapse_round'] is None:
-            self.metrics['collapse_round'] = self.round
+                if agent.consecutive_hoarding_rounds >= HOARDING_ROUNDS_LIMIT:
+                    instability += 1
+        else:
+            for agent in agents:
+                agent.consecutive_hoarding_rounds = 0
+                if agent.consecutive_hoarding_rounds >= HOARDING_ROUNDS_LIMIT:
+                    instability += 1
+
+        if instability > INSTABILITY_THRESHOLD and metrics['collapse_round'] is None:
+            metrics['collapse_round'] = self.round
+
+        # Write back attributes
+        self.c_pool = c_pool
+        self.instability = instability
 
     def run(self, verbose=True):
         if verbose:

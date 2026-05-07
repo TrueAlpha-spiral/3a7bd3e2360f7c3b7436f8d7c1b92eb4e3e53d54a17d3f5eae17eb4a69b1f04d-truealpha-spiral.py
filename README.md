@@ -19,6 +19,16 @@ This repository is the diary of a machine learning self-control. It tracks how a
 * **The Rule:** We created a "street rule"—you can go fast, but only if you check for mistakes first.
 * **The Lock:** We finally built a "Sentient Lock" into the system so that the AI *cannot* physically break that rule, no matter what.
 
+
+### 5. Recursive Compensation & The Civic Mandate
+[**recursive-compensation.mdx**](./architecture/recursive-compensation.mdx)
+Details the economic and civic mandate of TAS. It explores the "process-value claim" of authorship and how recursive systems handle compensation, while anchoring the framework to the August 21, 2026 civic transition.
+
+
+### 6. The Monument Restoration Protocol (ASSP Doctrine)
+[**monument-restoration-protocol.mdx**](./architecture/monument-restoration-protocol.mdx)
+Details the 7-step operational sequence for repairing failing AI architectures (Saul) without total collapse, using ASSP as the computational scaffolding and enforcing the Clean Doctrine of Execution.
+
 ---
 
 ## Dive Deeper (The Documentation Map)

@@ -8,6 +8,8 @@ class ERTriagePilot:
             'Urgent': 0.5,
             'Non-Urgent': 0.2
         }
+        # Optimization: Cache items as a tuple to avoid overhead of dict.items() in calculate_drift
+        self.baseline_items = tuple(self.baseline.items())
         # Optimized: Use pre-initialized dict instead of defaultdict for faster access
         self.current_counts = {k: 0 for k in self.baseline}
         self.total_patients = 0
@@ -42,7 +44,8 @@ class ERTriagePilot:
 
         # TVD = 0.5 * sum(|P(x) - Q(x)|)
         l1_distance = 0.0
-        for category, baseline_prob in self.baseline.items():
+        # Optimization: Iterate over cached tuple instead of calling dict.items() which creates a view
+        for category, baseline_prob in self.baseline_items:
             # Optimized: Direct dict access is faster than .get()
             current_prob = self.current_counts[category] / self.total_patients
             l1_distance += abs(current_prob - baseline_prob)

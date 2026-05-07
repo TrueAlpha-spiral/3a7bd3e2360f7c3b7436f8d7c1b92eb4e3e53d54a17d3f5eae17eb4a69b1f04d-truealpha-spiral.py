@@ -30,7 +30,9 @@ def airlock_gate(coherence, resonance):
 
     cost = (1.0 - coherence) * math.exp(resonance)
 
-    if math.isnan(cost) or cost > MAX_ENERGY_COST:
+    # Optimization: Native check `cost != cost` is measurably faster than `math.isnan(cost)`
+    # for verifying NaN because it avoids the function call overhead.
+    if cost != cost or cost > MAX_ENERGY_COST:
         return AIRLOCK_DENIED_ENERGY_COST_TOO_HIGH, cost
 
     return AIRLOCK_PASSED, cost
