@@ -273,8 +273,6 @@ class SimulationEnvironment:
         else:
             for agent in agents:
                 agent.consecutive_hoarding_rounds = 0
-                if agent.consecutive_hoarding_rounds >= HOARDING_ROUNDS_LIMIT:
-                    instability += 1
 
         if instability > INSTABILITY_THRESHOLD and metrics['collapse_round'] is None:
             metrics['collapse_round'] = self.round
