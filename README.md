@@ -29,6 +29,10 @@ Details the economic and civic mandate of TAS. It explores the "process-value cl
 [**monument-restoration-protocol.mdx**](./architecture/monument-restoration-protocol.mdx)
 Details the 7-step operational sequence for repairing failing AI architectures (Saul) without total collapse, using ASSP as the computational scaffolding and enforcing the Clean Doctrine of Execution.
 
+### 7. Pythonetics: The Kinetic Proof Bridge
+[**kinetic-proof-bridge.mdx**](./architecture/kinetic-proof-bridge.mdx)
+Explains the recursive constraint discipline that allows logical proof to survive translation into a kinetic C# execution runtime, returning as a mathematically verifiable receipt.
+
 ---
 
 ## Dive Deeper (The Documentation Map)
