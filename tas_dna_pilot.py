@@ -31,7 +31,9 @@ class ERTriagePilot:
     def get_current_distribution(self):
         if self.total_patients == 0:
             return {k: 0 for k in self.baseline}
-        return {k: v / self.total_patients for k, v in self.current_counts.items()}
+        # Optimization: Caching instance attributes locally avoids repetitive lookups in the loop, yielding a measurable speedup
+        total = self.total_patients
+        return {k: v / total for k, v in self.current_counts.items()}
 
     def calculate_drift(self):
         """
@@ -44,10 +46,13 @@ class ERTriagePilot:
 
         # TVD = 0.5 * sum(|P(x) - Q(x)|)
         l1_distance = 0.0
+        # Optimization: Caching instance attributes locally avoids repetitive lookups in the loop, yielding a measurable speedup
+        total = self.total_patients
+        counts = self.current_counts
         # Optimization: Iterate over cached tuple instead of calling dict.items() which creates a view
         for category, baseline_prob in self.baseline_items:
             # Optimized: Direct dict access is faster than .get()
-            current_prob = self.current_counts[category] / self.total_patients
+            current_prob = counts[category] / total
             l1_distance += abs(current_prob - baseline_prob)
 
         return 0.5 * l1_distance
