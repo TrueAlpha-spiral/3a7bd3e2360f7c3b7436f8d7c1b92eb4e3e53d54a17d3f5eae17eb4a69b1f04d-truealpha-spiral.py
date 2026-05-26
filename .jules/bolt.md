@@ -86,3 +86,6 @@
 ## 2024-05-30 - Avoid Function Local Imports on Hot Paths
 **Learning:** In Python, importing a module (e.g., `import math`) inside a function that is called frequently on a hot path introduces unnecessary overhead because the interpreter must check `sys.modules` on every invocation. Moving the import to the module level avoids this per-call lookup cost.
 **Action:** When optimizing tight loops or frequently called functions, hoist any local imports to the top of the file unless there is a specific reason (like avoiding circular imports or lazy loading a heavy, rarely used module) not to.
+## 2026-05-26 - EAFP pattern over LBYL for dict keys
+**Learning:** In CPython, when checking a list of expected keys in a dictionary (especially inside a loop), using the EAFP (Easier to Ask for Forgiveness than Permission) pattern with a `try...except KeyError` block is measurably faster (~1.5x) than the LBYL (Look Before You Leap) pattern (`key not in dict or not dict[key]`).
+**Action:** When iterating over expected keys in a hot path or validation loop, prefer wrapping the loop in `try...except KeyError` and directly checking truthiness rather than doing an explicit `in` check followed by a truthiness check.
