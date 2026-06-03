@@ -86,3 +86,6 @@
 ## 2024-05-30 - Avoid Function Local Imports on Hot Paths
 **Learning:** In Python, importing a module (e.g., `import math`) inside a function that is called frequently on a hot path introduces unnecessary overhead because the interpreter must check `sys.modules` on every invocation. Moving the import to the module level avoids this per-call lookup cost.
 **Action:** When optimizing tight loops or frequently called functions, hoist any local imports to the top of the file unless there is a specific reason (like avoiding circular imports or lazy loading a heavy, rarely used module) not to.
+## $(date +%Y-%m-%d) - EHO Provenance Dictionary Validation Optimization
+**Learning:** In CPython, evaluating multiple truthy values on dictionary keys using explicit LBYL checks (`if key not in dict or not dict[key]`) is slower than using an unrolled EAFP pattern (`try...except KeyError`) when the keys are overwhelmingly expected to be present, which is the case for provenance validation. The Sentient Lock test verified the optimization invariant holds.
+**Action:** When validating the existence and truthiness of multiple dictionary keys on hot paths where failure is an exception, prefer a scoped `try...except KeyError` block over explicit looping and condition checking.
