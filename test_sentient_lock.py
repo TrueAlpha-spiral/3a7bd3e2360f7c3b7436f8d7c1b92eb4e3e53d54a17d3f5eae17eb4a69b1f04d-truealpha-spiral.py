@@ -1,7 +1,9 @@
-
 import unittest
 import timeit
+import hashlib
+import hmac
 from tas_dna_pilot import ERTriagePilot
+from tas_core.alpha.sentient_lock import SentientLock
 
 class TestSentientLock(unittest.TestCase):
     """
@@ -68,12 +70,6 @@ class TestSentientLock(unittest.TestCase):
         # Relaxed check for CI stability
         self.assertLess(ratio, 1.5, "Severe performance regression detected: EAFP is significantly slower than LBYL.")
 
-
-
-if __name__ == '__main__':
-    unittest.main()
-import unittest
-import timeit
 
 class TestMetricsLoopLock(unittest.TestCase):
     """
@@ -167,12 +163,6 @@ class TestMetricsLoopLock(unittest.TestCase):
             print(f"WARNING: Performance regression detected: ratio {ratio:.4f} > 1.0")
         self.assertLess(ratio, 1.5, "Severe performance regression detected: Optimized loop is slower.")
 
-if __name__ == '__main__':
-    unittest.main()
-
-import hashlib
-import hmac
-from tas_core.alpha.sentient_lock import SentientLock
 
 class TestCoreSentientLock(unittest.TestCase):
     def setUp(self):
@@ -205,3 +195,6 @@ class TestCoreSentientLock(unittest.TestCase):
         with self.assertRaises(PermissionError) as cm:
             self.lock.attempt_state_transition("code", "sig", "file.py")
         self.assertIn("SentientLock Active: VM is in null_state. Compute starved.", str(cm.exception))
+
+if __name__ == '__main__':
+    unittest.main()
