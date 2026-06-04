@@ -397,30 +397,24 @@ class PublicVerifier:
         execution_ledger_receipt = transaction["execution_ledger_receipt"]
 
         # Optimization: Early evaluate cheap logical preconditions before expensive signature validation to avoid hashing overhead on invalid requests. Yields ~4.5x speedup for rejections.
-        # Optimization: EAFP approach is faster than LBYL with explicit .get()
-        try:
-            rec_hash = record_receipt["record_hash"]
-            if capsule.capsule_hash() != rec_hash:
-                return False
-            if binding_receipt["record_hash"] != rec_hash:
-                return False
-            anc_hash = boot_receipt["anchor_hash"]
-            if binding_receipt["anchor_hash"] != anc_hash:
-                return False
+        if capsule.capsule_hash() != record_receipt.get("record_hash"):
+            return False
+        if binding_receipt.get("record_hash") != record_receipt.get("record_hash"):
+            return False
+        if binding_receipt.get("anchor_hash") != boot_receipt.get("anchor_hash"):
+            return False
 
-            if gateway_receipt["status"] in (ALLOW_STATUS, DENY_STATUS):
-                if gateway_receipt["record_hash"] != rec_hash:
-                    return False
-                if gateway_receipt["anchor_hash"] != anc_hash:
-                    return False
-            else:
+        if gateway_receipt.get("status") in (ALLOW_STATUS, DENY_STATUS):
+            if gateway_receipt.get("record_hash") != record_receipt.get("record_hash"):
                 return False
+            if gateway_receipt.get("anchor_hash") != boot_receipt.get("anchor_hash"):
+                return False
+        else:
+            return False
 
-            if execution_ledger_receipt["record_id"] != record_receipt["record_id"]:
-                return False
-            if execution_ledger_receipt["execution_trace_hash"] != execution_trace["trace_hash"]:
-                return False
-        except KeyError:
+        if execution_ledger_receipt.get("record_id") != record_receipt.get("record_id"):
+            return False
+        if execution_ledger_receipt.get("execution_trace_hash") != execution_trace.get("trace_hash"):
             return False
 
         if not self._verify_signature(record_receipt, "witness_signature", self.witness_signing_key):

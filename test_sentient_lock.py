@@ -70,11 +70,6 @@ class TestSentientLock(unittest.TestCase):
 
 
 
-if __name__ == '__main__':
-    unittest.main()
-import unittest
-import timeit
-
 class TestMetricsLoopLock(unittest.TestCase):
     """
     The Invariant: Optimization AND Safety = True.
