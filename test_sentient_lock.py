@@ -169,3 +169,39 @@ class TestMetricsLoopLock(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+import hashlib
+import hmac
+from tas_core.alpha.sentient_lock import SentientLock
+
+class TestCoreSentientLock(unittest.TestCase):
+    def setUp(self):
+        self.anchor_key = b"secret_human_key"
+        self.lock = SentientLock(self.anchor_key)
+
+    def test_valid_hmac_lineage(self):
+        proposed_code = "print('hello world')"
+        signature = hmac.new(self.anchor_key, proposed_code.encode("utf-8"), hashlib.sha256).hexdigest()
+
+        result = self.lock.attempt_state_transition(proposed_code, signature, "test.py")
+        self.assertEqual(result, "State Transition Verified. test.py updated.")
+        self.assertTrue(self.lock.compute_active)
+        self.assertEqual(len(self.lock.refusal_ledger), 0)
+
+    def test_invalid_hmac_lineage_triggers_lock(self):
+        proposed_code = "print('hallucinated code')"
+        invalid_signature = "invalid_hash_string"
+
+        with self.assertRaises(SystemExit) as cm:
+            self.lock.attempt_state_transition(proposed_code, invalid_signature, "test.py")
+
+        self.assertEqual(cm.exception.code, "CRITICAL: Compute starved to prevent Hamiltonian Drift.")
+        self.assertFalse(self.lock.compute_active)
+        self.assertEqual(len(self.lock.refusal_ledger), 1)
+        self.assertEqual(self.lock.refusal_ledger[0]["event"], "HALLUCINATION_CASCADE_DETECTED")
+
+    def test_compute_starved_raises_permission_error(self):
+        self.lock.compute_active = False
+        with self.assertRaises(PermissionError) as cm:
+            self.lock.attempt_state_transition("code", "sig", "file.py")
+        self.assertIn("SentientLock Active: VM is in null_state. Compute starved.", str(cm.exception))
