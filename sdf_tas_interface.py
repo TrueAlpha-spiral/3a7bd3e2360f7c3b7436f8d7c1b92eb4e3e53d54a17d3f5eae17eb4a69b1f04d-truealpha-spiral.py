@@ -435,7 +435,7 @@ class PublicVerifier:
             execution_trace = transaction["execution_trace"]
             if execution_ledger_receipt["execution_trace_hash"] != execution_trace["trace_hash"]:
                 return False
-        except KeyError:
+        except (KeyError, TypeError):
             return False
 
         if not self._verify_signature(record_receipt, "witness_signature", self.witness_signing_key):
