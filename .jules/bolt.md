@@ -97,3 +97,7 @@
 ## $(date +%Y-%m-%d) - EAFP Optimization for Phase 0 Microkernel Token Validation
 **Learning:** In CPython, evaluating multiple truthy values on dictionary keys using explicit LBYL checks (`if "key" not in token or not token["key"]`) is slower than using an unrolled EAFP pattern (`try...except KeyError`) when the keys are overwhelmingly expected to be present, which is the case for one-shot token validation. Microbenchmarks showed a ~1.88x speedup for the happy path.
 **Action:** When validating the existence and truthiness of sequential dictionary keys on critical hot paths (like microkernel guard validations), where failure is the exception, prefer a scoped `try...except KeyError` block over explicit looping and condition checking.
+
+## 2024-06-08 - Defer dictionary key extraction in EAFP validation blocks
+**Learning:** Extracting dictionary keys upfront before entering an EAFP try...except KeyError block incurs unnecessary lookup overhead if early conditions fail, and defeats the purpose of the fast path if the dictionary itself is malformed. Moving the extraction into the try block immediately before use yields measurable speedups for early rejections.
+**Action:** When optimizing validation functions using the EAFP pattern, defer the extraction of dictionary keys until inside the try block and immediately before they are needed.
