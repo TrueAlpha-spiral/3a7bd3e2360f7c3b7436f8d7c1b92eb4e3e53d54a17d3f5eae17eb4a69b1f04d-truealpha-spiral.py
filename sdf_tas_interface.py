@@ -401,25 +401,25 @@ class PublicVerifier:
         return signature == sign_payload(payload, signing_key)
 
     def verify_transaction(self, capsule: EpistemicCapsule, transaction: Dict[str, Any]) -> bool:
-        record_receipt = transaction["record_receipt"]
-        boot_receipt = transaction["boot_receipt"]
-        binding_receipt = transaction["binding_receipt"]
-        gateway_receipt = transaction["gateway_receipt"]
-        execution_trace = transaction["execution_trace"]
-        execution_ledger_receipt = transaction["execution_ledger_receipt"]
-
         # Optimization: Early evaluate cheap logical preconditions before expensive signature validation to avoid hashing overhead on invalid requests. Yields ~4.5x speedup for rejections.
         # Optimization: EAFP approach is faster than LBYL with explicit .get()
+        # Optimization: Defer dictionary key extraction inside the try block immediately before use to avoid upfront lookup overhead for early rejections.
         try:
+            record_receipt = transaction["record_receipt"]
             rec_hash = record_receipt["record_hash"]
             if capsule.capsule_hash() != rec_hash:
                 return False
+
+            binding_receipt = transaction["binding_receipt"]
             if binding_receipt["record_hash"] != rec_hash:
                 return False
+
+            boot_receipt = transaction["boot_receipt"]
             anc_hash = boot_receipt["anchor_hash"]
             if binding_receipt["anchor_hash"] != anc_hash:
                 return False
 
+            gateway_receipt = transaction["gateway_receipt"]
             if gateway_receipt["status"] in (ALLOW_STATUS, DENY_STATUS):
                 if gateway_receipt["record_hash"] != rec_hash:
                     return False
@@ -428,11 +428,14 @@ class PublicVerifier:
             else:
                 return False
 
+            execution_ledger_receipt = transaction["execution_ledger_receipt"]
             if execution_ledger_receipt["record_id"] != record_receipt["record_id"]:
                 return False
+
+            execution_trace = transaction["execution_trace"]
             if execution_ledger_receipt["execution_trace_hash"] != execution_trace["trace_hash"]:
                 return False
-        except KeyError:
+        except (KeyError, TypeError):
             return False
 
         if not self._verify_signature(record_receipt, "witness_signature", self.witness_signing_key):
