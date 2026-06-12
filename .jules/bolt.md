@@ -101,3 +101,6 @@
 ## 2024-06-08 - Defer dictionary key extraction in EAFP validation blocks
 **Learning:** Extracting dictionary keys upfront before entering an EAFP try...except KeyError block incurs unnecessary lookup overhead if early conditions fail, and defeats the purpose of the fast path if the dictionary itself is malformed. Moving the extraction into the try block immediately before use yields measurable speedups for early rejections.
 **Action:** When optimizing validation functions using the EAFP pattern, defer the extraction of dictionary keys until inside the try block and immediately before they are needed.
+## $(date +%Y-%m-%d) - Cache object attributes locally in loops
+**Learning:** Caching object attributes (like `agent.name` or `agent.compute_held`) to local variables (`a_name`, `a_held`) inside tight loops replaces `LOAD_ATTR` with `LOAD_FAST` instructions, effectively bypassing instance dictionary lookup overhead, yielding measurable performance speedups (e.g., ~1.2x on simulation metric loops).
+**Action:** When a loop repeatedly accesses properties from an object (and does not write to them or require observing external state changes during the loop execution), cache the values into local variables to boost tight loop performance.
