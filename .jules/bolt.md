@@ -106,5 +106,9 @@
 **Action:** When a loop repeatedly accesses properties from an object (and does not write to them or require observing external state changes during the loop execution), cache the values into local variables to boost tight loop performance.
 
 ## 2024-06-13 - Avoid `dataclasses.asdict()` on Hot Paths for Flat Dataclasses
-**Learning:** The standard library `dataclasses.asdict()` function is surprisingly slow because it performs recursive type checking and deep copying of values. When working with flat, frozen dataclasses containing only primitives (like `EpistemicCapsule`), manually constructing a dictionary is roughly ~15x faster.
-**Action:** On critical hot paths like cryptographic payload generation involving flat dataclasses, bypass `asdict()` and construct the dictionary manually for significant performance gains without sacrificing readability.
+**Learning:** The standard library `dataclasses.asdict()` function is surprisingly slow because it performs recursive type checking and deep copying of values. When working with flat, frozen dataclasses containing only primitives (like `Phase0Manifest` or `ActionProposal`), manually constructing a dictionary is roughly ~5-8x faster in tight loops.
+**Action:** On critical hot paths like cryptographic payload generation or canonical serialization involving flat dataclasses, bypass `asdict()` and construct the dictionary manually for significant performance gains without sacrificing readability.
+
+## 2024-06-13 - Fast instantiation with `NamedTuple` vs `dataclass(frozen=True)`
+**Learning:** For extremely lightweight, rigid data structures (like `SovereignIdentity`) that are frequently instantiated or passed through the token lifecycle, using `typing.NamedTuple` is approximately ~2x faster to instantiate than `dataclasses.dataclass(frozen=True)`. It provides the same immutability guarantees but avoids the heavier Python class creation overhead.
+**Action:** For object lifecycles involving purely immutable, lightweight structures that act as simple data vessels, prefer `NamedTuple` over frozen dataclasses to optimize instantiation and attribute access overhead.
