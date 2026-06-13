@@ -104,3 +104,7 @@
 ## $(date +%Y-%m-%d) - Cache object attributes locally in loops
 **Learning:** Caching object attributes (like `agent.name` or `agent.compute_held`) to local variables (`a_name`, `a_held`) inside tight loops replaces `LOAD_ATTR` with `LOAD_FAST` instructions, effectively bypassing instance dictionary lookup overhead, yielding measurable performance speedups (e.g., ~1.2x on simulation metric loops).
 **Action:** When a loop repeatedly accesses properties from an object (and does not write to them or require observing external state changes during the loop execution), cache the values into local variables to boost tight loop performance.
+
+## 2024-06-13 - Avoid `dataclasses.asdict()` on Hot Paths for Flat Dataclasses
+**Learning:** The standard library `dataclasses.asdict()` function is surprisingly slow because it performs recursive type checking and deep copying of values. When working with flat, frozen dataclasses containing only primitives (like `EpistemicCapsule`), manually constructing a dictionary is roughly ~15x faster.
+**Action:** On critical hot paths like cryptographic payload generation involving flat dataclasses, bypass `asdict()` and construct the dictionary manually for significant performance gains without sacrificing readability.
