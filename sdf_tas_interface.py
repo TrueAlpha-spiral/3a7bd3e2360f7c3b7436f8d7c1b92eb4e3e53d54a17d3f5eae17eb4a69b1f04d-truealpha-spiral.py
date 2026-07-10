@@ -402,7 +402,8 @@ class PublicVerifier:
 
     @staticmethod
     def _verify_signature(signed_payload: Dict[str, Any], signature_field: str, signing_key: str) -> bool:
-        payload = dict(signed_payload)
+        # Optimization: .copy() is faster than dict() for shallow copying, avoiding iteration overhead
+        payload = signed_payload.copy()
         signature = payload.pop(signature_field, None)
         if signature is None:
             return False
