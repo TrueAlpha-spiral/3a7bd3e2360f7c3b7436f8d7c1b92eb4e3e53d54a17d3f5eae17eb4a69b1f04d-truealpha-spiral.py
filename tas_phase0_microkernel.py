@@ -253,7 +253,7 @@ def guard_accepts_token(token: Dict[str, Any] | None, signing_key: str, used_cou
     except KeyError:
         return False
 
-    # Optimization: Using .copy() is faster than dict() for shallow copies, ~3-4x speedup
+    # Preserve the token while removing the signature from the verified payload. Optimization: Using .copy() is faster than dict() for shallow copies, ~3-4x speedup
     unsigned = token.copy()
     unsigned.pop("signature", None)
     if signature != sign_payload(unsigned, signing_key):
