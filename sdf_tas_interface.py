@@ -97,7 +97,8 @@ class SDFRegistryAPI:
             "public_key": identity.public_key,
             "metadata": metadata or {},
         }
-        return dict(self.identity_registry[identity.sovereign_id])
+        # Optimization: Using .copy() is significantly faster than dict() for shallow dictionary copies.
+        return self.identity_registry[identity.sovereign_id].copy()
 
     def notarize_capsule(self, capsule: EpistemicCapsule) -> Dict[str, Any]:
         self._require_non_empty(capsule.claims, "capsule missing claims")
@@ -116,7 +117,8 @@ class SDFRegistryAPI:
             "status": "WITNESSED",
             "event": "CAPSULE_NOTARIZED",
         }
-        receipt = dict(unsigned)
+        # Optimization: Using .copy() is significantly faster than dict() for shallow dictionary copies.
+        receipt = unsigned.copy()
         receipt["witness_signature"] = sign_payload(unsigned, self._witness_signing_key)
         self.ledger.append(receipt)
         return receipt
@@ -138,7 +140,8 @@ class SDFRegistryAPI:
             "previous_receipt_hash": previous_receipt_hash,
             "timestamp_utc": _utc_timestamp(),
         }
-        entry = dict(unsigned)
+        # Optimization: Using .copy() is significantly faster than dict() for shallow dictionary copies.
+        entry = unsigned.copy()
         entry["witness_signature"] = sign_payload(unsigned, self._witness_signing_key)
         self.ledger.append(entry)
         return entry
@@ -177,7 +180,8 @@ class TASAdmissibilityGateway:
             "timestamp_utc": _utc_timestamp(),
         }
         payload["binding_hash"] = digest_payload(payload)
-        receipt = dict(payload)
+        # Optimization: Using .copy() is significantly faster than dict() for shallow dictionary copies.
+        receipt = payload.copy()
         receipt["signature"] = sign_payload(payload, self.verifier_signing_key)
         return receipt
 
@@ -191,7 +195,8 @@ class TASAdmissibilityGateway:
                 "anchor_hash": intent.anchor_hash,
             }
             refusal_payload["receipt_hash"] = digest_payload(refusal_payload)
-            refusal = dict(refusal_payload)
+            # Optimization: Using .copy() is significantly faster than dict() for shallow dictionary copies.
+            refusal = refusal_payload.copy()
             refusal["signature"] = sign_payload(refusal_payload, self.verifier_signing_key)
             return refusal
 
@@ -216,7 +221,8 @@ class TASAdmissibilityGateway:
             "verification_receipt": verification_receipt,
         }
         payload["gateway_receipt_hash"] = digest_payload(payload)
-        gateway_receipt = dict(payload)
+        # Optimization: Using .copy() is significantly faster than dict() for shallow dictionary copies.
+        gateway_receipt = payload.copy()
         gateway_receipt["signature"] = sign_payload(payload, self.verifier_signing_key)
         return gateway_receipt
 
@@ -279,7 +285,8 @@ class ExternalActuatorGuard:
             "timestamp_utc": _utc_timestamp(),
         }
         trace_payload["trace_hash"] = digest_payload(trace_payload)
-        trace = dict(trace_payload)
+        # Optimization: Using .copy() is significantly faster than dict() for shallow dictionary copies.
+        trace = trace_payload.copy()
         trace["signature"] = sign_payload(trace_payload, self.verifier_signing_key)
         return trace
 
@@ -402,7 +409,8 @@ class PublicVerifier:
 
     @staticmethod
     def _verify_signature(signed_payload: Dict[str, Any], signature_field: str, signing_key: str) -> bool:
-        payload = dict(signed_payload)
+        # Optimization: Using .copy() is significantly faster than dict() for shallow dictionary copies.
+        payload = signed_payload.copy()
         signature = payload.pop(signature_field, None)
         if signature is None:
             return False
