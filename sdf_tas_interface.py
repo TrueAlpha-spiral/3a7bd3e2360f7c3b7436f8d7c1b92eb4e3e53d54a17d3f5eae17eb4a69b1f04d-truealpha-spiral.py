@@ -423,8 +423,6 @@ class PublicVerifier:
         try:
             record_receipt = transaction["record_receipt"]
             rec_hash = record_receipt["record_hash"]
-            if capsule.capsule_hash() != rec_hash:
-                return False
 
             binding_receipt = transaction["binding_receipt"]
             if binding_receipt["record_hash"] != rec_hash:
@@ -450,6 +448,10 @@ class PublicVerifier:
 
             execution_trace = transaction["execution_trace"]
             if execution_ledger_receipt["execution_trace_hash"] != execution_trace["trace_hash"]:
+                return False
+
+            # Optimization: Defer expensive capsule_hash() until after cheap dictionary checks
+            if capsule.capsule_hash() != rec_hash:
                 return False
         except (KeyError, TypeError):
             return False
