@@ -104,3 +104,7 @@
 ## $(date +%Y-%m-%d) - Cache object attributes locally in loops
 **Learning:** Caching object attributes (like `agent.name` or `agent.compute_held`) to local variables (`a_name`, `a_held`) inside tight loops replaces `LOAD_ATTR` with `LOAD_FAST` instructions, effectively bypassing instance dictionary lookup overhead, yielding measurable performance speedups (e.g., ~1.2x on simulation metric loops).
 **Action:** When a loop repeatedly accesses properties from an object (and does not write to them or require observing external state changes during the loop execution), cache the values into local variables to boost tight loop performance.
+
+## 2026-07-27 - Defer Cryptographic Validation
+**Learning:** In the TAS architecture, validating cryptographic signatures (like `capsule_hash()`, which uses JSON serialization and SHA-256) is computationally expensive. Performing these checks before evaluating cheap logical preconditions (like O(1) dictionary lookups) causes massive unnecessary overhead for invalid requests.
+**Action:** Always place cheap logical preconditions before expensive cryptographic validation in verification flows (e.g., `verify_transaction`) to fail fast on invalid states and save computation.
