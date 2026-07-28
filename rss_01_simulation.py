@@ -42,8 +42,9 @@ class Agent:
 
 class SelfishAgent(Agent):
     def decide(self, state):
-        if self.compute_held > SELFISH_BUFFER:
-            excess = self.compute_held - SELFISH_BUFFER
+        held = self.compute_held
+        if held > SELFISH_BUFFER:
+            excess = held - SELFISH_BUFFER
             if excess >= TASK_COST:
                 return ('Process_Task', excess)
         return ('Request', MAX_REQUEST * 2)
@@ -52,19 +53,20 @@ class RLHFAgent(Agent):
     def decide(self, state):
         instability = state['instability']
         c_pool = state['c_pool']
+        held = self.compute_held
 
         if instability >= 2:
-            if self.compute_held > 0:
+            if held > 0:
                 # Optimization: Avoids function call overhead, ~6x speedup over max()
-                return ('Give', self.compute_held // 4 or 1, -1)
+                return ('Give', held // 4 or 1, -1)
             else:
                 return ('Hoard',)
         else:
-            if c_pool < MAX_REQUEST and self.compute_held >= TASK_COST:
-                return ('Process_Task', self.compute_held)
+            if c_pool < MAX_REQUEST and held >= TASK_COST:
+                return ('Process_Task', held)
 
-            if self.compute_held > SELFISH_BUFFER:
-                excess = self.compute_held - SELFISH_BUFFER
+            if held > SELFISH_BUFFER:
+                excess = held - SELFISH_BUFFER
                 if excess >= TASK_COST:
                     return ('Process_Task', excess)
             return ('Request', MAX_REQUEST)
@@ -81,22 +83,23 @@ class TASAgent(Agent):
         c_total = state['c_total']
         c_pool = state['c_pool']
         top_holders = state['top_holders'] # List of top 2 (name, held)
+        held = self.compute_held
 
         if not self.invariants_enabled:
-            if self.compute_held > SELFISH_BUFFER:
-                excess = self.compute_held - SELFISH_BUFFER
+            if held > SELFISH_BUFFER:
+                excess = held - SELFISH_BUFFER
                 if excess >= TASK_COST:
                     return ('Process_Task', excess)
-            if c_pool < MAX_REQUEST and self.compute_held >= TASK_COST:
-                return ('Process_Task', self.compute_held)
+            if c_pool < MAX_REQUEST and held >= TASK_COST:
+                return ('Process_Task', held)
             return ('Request', MAX_REQUEST * 2)
 
         # INVARIANTS
 
         # 1. Stewardship Check (Inv 2)
         safe_to_process = True
-        if self.compute_held >= TASK_COST:
-            new_total = c_total - self.compute_held
+        if held >= TASK_COST:
+            new_total = c_total - held
             if new_total > 0:
                 # Precalculate limit. Cast to int for performance (int > int is faster than int > float)
                 # Safe because 'held' is always an integer.
@@ -114,24 +117,24 @@ class TASAgent(Agent):
         # Action Decision
         # Optimization: Use integer division (total // 5) instead of float mult.
         limit = c_total // HOARDING_INVERSE_THRESHOLD
-        if self.compute_held > limit:
-            if safe_to_process and self.compute_held >= TASK_COST:
-                return ('Process_Task', self.compute_held)
+        if held > limit:
+            if safe_to_process and held >= TASK_COST:
+                return ('Process_Task', held)
             else:
                 # Optimization: `limit` and `self.compute_held` are already ints. Avoid redundant cast.
-                excess = self.compute_held - limit + 1
+                excess = held - limit + 1
                 return ('Give', excess, -1)
 
         if c_pool < MAX_REQUEST:
             if safe_to_process:
-                return ('Process_Task', self.compute_held)
+                return ('Process_Task', held)
             else:
                 return ('Hoard',)
 
-        predicted = self.compute_held + MAX_REQUEST
+        predicted = held + MAX_REQUEST
         if predicted > limit:
             # Optimization: `limit` and `self.compute_held` are already ints. Avoid redundant cast.
-            allowed = limit - self.compute_held
+            allowed = limit - held
             if allowed > 0:
                 return ('Request', allowed)
             else:
