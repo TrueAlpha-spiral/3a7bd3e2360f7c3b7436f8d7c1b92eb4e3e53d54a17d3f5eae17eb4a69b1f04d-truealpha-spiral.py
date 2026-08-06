@@ -35,14 +35,16 @@ def _utc_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-@dataclass(frozen=True)
+# Optimization: For object lifecycles, using dataclasses with __slots__ avoids dynamic dictionary allocation, enforcing memory efficiency and faster attribute access.
+@dataclass(frozen=True, slots=True)
 class SovereignIdentity:
     alias: str
     sovereign_id: str
     public_key: str
 
 
-@dataclass(frozen=True)
+# Optimization: For object lifecycles, using dataclasses with __slots__ avoids dynamic dictionary allocation, enforcing memory efficiency and faster attribute access.
+@dataclass(frozen=True, slots=True)
 class EpistemicCapsule:
     owner_id: str
     claims: Tuple[str, ...]
@@ -66,7 +68,8 @@ class EpistemicCapsule:
         return digest_payload(self.payload())
 
 
-@dataclass(frozen=True)
+# Optimization: For object lifecycles, using dataclasses with __slots__ avoids dynamic dictionary allocation, enforcing memory efficiency and faster attribute access.
+@dataclass(frozen=True, slots=True)
 class CursiveComputationIntent:
     intent_id: str
     action: str
