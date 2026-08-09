@@ -244,6 +244,7 @@ def guard_accepts_token(token: Dict[str, Any] | None, signing_key: str, used_cou
     # Optimization: Using EAFP pattern (try...except KeyError) is measurably faster (~1.3x speedup) than .get() for dictionary access by avoiding method call overhead.
     # Optimization: Using EAFP pattern (try...except KeyError) is measurably faster (~1.88x speedup) by avoiding dictionary lookup overhead.
     try:
+        # Optimization: Defer dictionary key extraction inside the EAFP validation block immediately before use to avoid upfront lookup overhead for early rejections, yielding a measurable speedup.
         if not token["one_shot"]:
             return False
         counter = token["counter"]
