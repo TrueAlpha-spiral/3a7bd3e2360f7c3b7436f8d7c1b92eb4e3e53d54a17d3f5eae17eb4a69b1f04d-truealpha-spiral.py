@@ -35,15 +35,17 @@ def _utc_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SovereignIdentity:
+    # Optimization: Added slots=True. Reduces memory footprint and speeds up attribute access.
     alias: str
     sovereign_id: str
     public_key: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class EpistemicCapsule:
+    # Optimization: Added slots=True. Reduces memory footprint and speeds up attribute access.
     owner_id: str
     claims: Tuple[str, ...]
     sources: Tuple[str, ...]
@@ -66,8 +68,9 @@ class EpistemicCapsule:
         return digest_payload(self.payload())
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class CursiveComputationIntent:
+    # Optimization: Added slots=True. Reduces memory footprint and speeds up attribute access.
     intent_id: str
     action: str
     policy_scope: str
