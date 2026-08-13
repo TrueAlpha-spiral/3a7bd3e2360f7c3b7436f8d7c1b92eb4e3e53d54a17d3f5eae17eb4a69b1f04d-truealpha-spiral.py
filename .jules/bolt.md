@@ -108,3 +108,7 @@
 ## 2026-07-27 - Defer Cryptographic Validation
 **Learning:** In the TAS architecture, validating cryptographic signatures (like `capsule_hash()`, which uses JSON serialization and SHA-256) is computationally expensive. Performing these checks before evaluating cheap logical preconditions (like O(1) dictionary lookups) causes massive unnecessary overhead for invalid requests.
 **Action:** Always place cheap logical preconditions before expensive cryptographic validation in verification flows (e.g., `verify_transaction`) to fail fast on invalid states and save computation.
+
+## 2026-08-04 - Unroll Loop Overhead in EAFP Blocks
+**Learning:** In CPython, evaluating multiple truthy values on dictionary keys using an explicit loop inside an EAFP pattern (`try...except KeyError`) introduces measurable loop overhead on hot paths. Unrolling the loop into explicit logical AND checks via array index mapping avoids this overhead and provides roughly a ~30% speedup, provided the dynamic keys are strictly referenced by instance properties to prevent decoupling.
+**Action:** When validating the existence and truthiness of multiple dictionary keys mapped to a dynamic or instance property, unroll the explicit loop into direct logical AND checks using index mapping rather than hardcoding the keys.

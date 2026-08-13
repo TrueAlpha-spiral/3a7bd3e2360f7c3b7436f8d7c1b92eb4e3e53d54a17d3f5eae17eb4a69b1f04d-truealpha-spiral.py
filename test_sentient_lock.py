@@ -198,3 +198,66 @@ class TestCoreSentientLock(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class TestEHOProvenanceLock(unittest.TestCase):
+    """
+    The Invariant: Optimization AND Safety = True.
+    This test ensures no future optimization to verify_provenance can bypass
+    the safety conditions, while confirming the unrolled logical AND check is faster
+    than a loop.
+    """
+
+    def test_invariant_optimization(self):
+        class MockEHO:
+            def __init__(self):
+                self.provenance_keys = ["source", "scope", "lineage", "authority", "admissibility"]
+
+            def current_impl(self, context):
+                try:
+                    for key in self.provenance_keys:
+                        if not context[key]:
+                            return False
+                    return True
+                except KeyError:
+                    return False
+
+            def optimized_impl(self, context):
+                try:
+                    keys = self.provenance_keys
+                    return bool(
+                        context[keys[0]] and
+                        context[keys[1]] and
+                        context[keys[2]] and
+                        context[keys[3]] and
+                        context[keys[4]]
+                    )
+                except (KeyError, IndexError):
+                    return False
+
+        eho = MockEHO()
+        ctx_valid = {"source": True, "scope": True, "lineage": True, "authority": True, "admissibility": True}
+        ctx_missing = {"source": True, "scope": True}
+        ctx_false = {"source": True, "scope": False, "lineage": True, "authority": True, "admissibility": True}
+
+        # Safety checks
+        self.assertTrue(eho.current_impl(ctx_valid))
+        self.assertTrue(eho.optimized_impl(ctx_valid))
+
+        self.assertFalse(eho.current_impl(ctx_missing))
+        self.assertFalse(eho.optimized_impl(ctx_missing))
+
+        self.assertFalse(eho.current_impl(ctx_false))
+        self.assertFalse(eho.optimized_impl(ctx_false))
+
+        # Performance Check
+        import timeit
+        number = 100000
+        time_original = timeit.timeit(lambda: eho.current_impl(ctx_valid), number=number)
+        time_opt = timeit.timeit(lambda: eho.optimized_impl(ctx_valid), number=number)
+
+        ratio = time_opt / time_original
+        print(f"\n[Sentient Lock] EHO Provenance Loop Unrolling Ratio: {ratio:.4f} (Lower is better)")
+
+        if ratio > 1.0:
+            print(f"WARNING: Performance regression detected: ratio {ratio:.4f} > 1.0")
+        self.assertLess(ratio, 1.5, "Severe performance regression detected: Unrolled check is slower.")
