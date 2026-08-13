@@ -27,7 +27,8 @@ ALLOW_STATUS = "ALLOW_TOKEN_ISSUED"
 DENY_STATUS = "SIGNED_REFUSAL_RECEIPT"
 
 
-@dataclass(frozen=True)
+# Optimization: Setting slots=True in frozen dataclasses prevents per-instance dictionary creation, improving object initialization speed and memory footprint.
+@dataclass(frozen=True, slots=True)
 class Phase0Manifest:
     """Canonical boot manifest for the Phase 0 kernel."""
 
@@ -87,7 +88,8 @@ class Phase0Manifest:
         return sha256(self.canonical_bytes()).hexdigest()
 
 
-@dataclass(frozen=True)
+# Optimization: Setting slots=True in frozen dataclasses prevents per-instance dictionary creation, improving object initialization speed and memory footprint.
+@dataclass(frozen=True, slots=True)
 class ActionProposal:
     """Untrusted host proposal submitted to an independent verifier."""
 
@@ -101,7 +103,8 @@ class ActionProposal:
     snapshot_id: str
 
 
-@dataclass(frozen=True)
+# Optimization: Setting slots=True in frozen dataclasses prevents per-instance dictionary creation, improving object initialization speed and memory footprint.
+@dataclass(frozen=True, slots=True)
 class VerificationPolicy:
     """Minimal deterministic policy for the split-trust proof."""
 
