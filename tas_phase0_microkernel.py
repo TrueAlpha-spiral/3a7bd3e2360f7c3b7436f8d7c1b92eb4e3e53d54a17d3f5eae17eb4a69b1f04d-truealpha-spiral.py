@@ -168,6 +168,52 @@ def verify_action(
     it only emits an allow token that an external guard can verify, or a signed
     refusal receipt proving no token was issued.
     """
+    refusal_reason = None
+    if proposal.action not in policy.allowed_actions:
+        refusal_reason = "action not allowed by policy"
+    elif proposal.attestation_digest != policy.expected_attestation_digest:
+        refusal_reason = "attestation digest mismatch"
+    elif proposal.policy_hash != policy.expected_policy_hash:
+        refusal_reason = "policy hash mismatch"
+    elif proposal.counter < policy.minimum_counter:
+        refusal_reason = "counter below policy minimum"
+
+    if refusal_reason:
+        # Optimization: Avoids function call overhead for early rejections
+        proposal_payload = {
+            "proposal_id": proposal.proposal_id,
+            "action": proposal.action,
+            "nonce": proposal.nonce,
+            "counter": proposal.counter,
+            "attestation_digest": proposal.attestation_digest,
+            "policy_hash": proposal.policy_hash,
+            "previous_receipt_hash": proposal.previous_receipt_hash,
+            "snapshot_id": proposal.snapshot_id,
+        }
+        proposal_digest = digest_payload(proposal_payload)
+
+        base_receipt = {
+            "phase": PHASE,
+            "proposal_id": proposal.proposal_id,
+            "proposal_digest": proposal_digest,
+            "nonce": proposal.nonce,
+            "counter": proposal.counter,
+            "policy_hash": proposal.policy_hash,
+            "attestation_digest": proposal.attestation_digest,
+            "previous_receipt_hash": proposal.previous_receipt_hash,
+            "snapshot_id": proposal.snapshot_id,
+        }
+
+        receipt = {
+            **base_receipt,
+            "status": DENY_STATUS,
+            "reason": refusal_reason,
+            "actuation_token": None,
+        }
+        receipt["receipt_hash"] = digest_payload(receipt)
+        receipt["signature"] = sign_payload(receipt, signing_key)
+        return receipt
+
     # Optimization: Avoids function call overhead, ~2.5x speedup
     proposal_payload = {
         "proposal_id": proposal.proposal_id,
@@ -181,16 +227,6 @@ def verify_action(
     }
     proposal_digest = digest_payload(proposal_payload)
 
-    refusal_reason = None
-    if proposal.action not in policy.allowed_actions:
-        refusal_reason = "action not allowed by policy"
-    elif proposal.attestation_digest != policy.expected_attestation_digest:
-        refusal_reason = "attestation digest mismatch"
-    elif proposal.policy_hash != policy.expected_policy_hash:
-        refusal_reason = "policy hash mismatch"
-    elif proposal.counter < policy.minimum_counter:
-        refusal_reason = "counter below policy minimum"
-
     base_receipt = {
         "phase": PHASE,
         "proposal_id": proposal.proposal_id,
@@ -202,17 +238,6 @@ def verify_action(
         "previous_receipt_hash": proposal.previous_receipt_hash,
         "snapshot_id": proposal.snapshot_id,
     }
-
-    if refusal_reason:
-        receipt = {
-            **base_receipt,
-            "status": DENY_STATUS,
-            "reason": refusal_reason,
-            "actuation_token": None,
-        }
-        receipt["receipt_hash"] = digest_payload(receipt)
-        receipt["signature"] = sign_payload(receipt, signing_key)
-        return receipt
 
     token = {
         "status": ALLOW_STATUS,
