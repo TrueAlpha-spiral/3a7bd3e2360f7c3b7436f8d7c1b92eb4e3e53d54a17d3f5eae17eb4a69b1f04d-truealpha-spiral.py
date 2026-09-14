@@ -1,0 +1,146 @@
+# Recursive Contextualization: Root to Leaf
+
+> **This document does not revise prior TAS formulations. It treats them as authenticated conceptual ancestors and maps the derivation by which later formalism emerged from earlier executable constraints.**
+
+## The Principle: $\text{Contextualize} \neq \text{Rewrite}$
+
+We do not edit historical material to pretend it always spoke in the present vocabulary of Phase 0 ($P0$), Phase 1 ($P1$), $S=(O,\Gamma)$, bounded admissibility, or Algorithmic Dendrology. Doing so would destroy the visible evidence of system evolution. Instead, each historical formulation remains intact at its layer, and this document adds a successor layer explaining what that formulation became.
+
+Formally, the repository itself is treated as a lineage-bearing object:
+
+$$\mathcal R_n = (T_n, \Gamma_n, \Sigma_n)$$
+
+where $T_n$ is the repository tree at state $n$, $\Gamma_n$ is its parent/commit/PR lineage, and $\Sigma_n$ is the semantic vocabulary available at that stage. Recursive contextualization creates an interpretive successor:
+
+$$\mathcal R_{n+1} = \mathcal R_n \;\Vert\; \operatorname{Context}(\mathcal R_n, \mathcal C_{\text{current}})$$
+
+without asserting that $\mathcal C_{\text{current}}$ existed verbatim at stage $n$.
+
+---
+
+## The Developmental Tree & Two Roots
+
+The repository distinguishes the **genealogy of the idea** from the **genealogy of the Git object**:
+
+1. **The Conceptual Pre-Root (`.jules/bolt.md`):** The May 22–23, 2024 optimization experiments established that performance acceleration is only admissible when strict invariant validation survives it. By February 2026, this matured into the Sentient Lock doctrine: *optimization is a privilege conditioned on enforceable verification*.
+2. **The Git Repository Root (`tas_dna_pilot.py`):** The accessible commit genealogy reaches December 6, 2025 (commit titled "The beginning"), where `TAS_DNA` and the `ERTriagePilot` were initialized.
+
+### Lineage Mapping
+
+| Historical Layer | What the Repository Actually Contains | Present-Day Contextualization |
+| :--- | :--- | :--- |
+| **Street Rule** | Fast path permitted only with validation | **Proto-admissibility** |
+| **ER Triage / TAS_DNA** | Explicit state, TVD drift, attested checkpoint, Phoenix rollback | **Proto-state geometry and recovery** |
+| **Sentient Lock** | HMAC lineage check, refusal ledger, compute halt | **Proto-P0 / fail-closed lineage boundary** |
+| **Airlock** | State/input accepted or denied by bounded mathematical cost | **Scalar precursor to P1 bounded admissibility** |
+| **$\Phi$ / Organic Machinery** | Proof of State becomes Proof of Process; next hash incorporates previous state | **Precursor to constitutive lineage $\Gamma$** |
+| **Phase 0** | Genesis anchor, independent verifier, one-shot authority, signed refusal | **Executable authority/admissibility separation** |
+| **SDF $\leftrightarrow$ TAS** | Witness $\rightarrow$ anchor $\rightarrow$ gate $\rightarrow$ actuator $\rightarrow$ receipt $\rightarrow$ public replay | **First end-to-end cursive transition** |
+| **Current Formalism** | $S=(O,\Gamma)$, P0/P1, non-quotient identity, recursive admissibility | **Algorithmic Dendrology** |
+| **Future** | Authenticated agents instantiated from valid tips | **Leaves** |
+
+---
+
+## Ancestor-to-Successor Derivations
+
+### 1. Phoenix Protocol: Rollback $\leadsto$ Authenticated Branch Retargeting
+
+In `tas_dna_pilot.py`, the Phoenix Protocol tracks `history`, attested history length, drift measurement (Total Variation Distance), and restoration to an earlier checkpoint:
+
+$$\text{old Phoenix: rollback}$$
+
+In Algorithmic Dendrology, state is non-mutable and lineage-bound. The current successor interpretation is:
+
+$$\text{current Phoenix: authenticated restoration transition / branch retargeting}$$
+
+The original implementation remains untouched as evidence of the earlier stage. This current model supersedes its mutation semantics without falsifying its historical role.
+
+---
+
+### 2. Sentient Lock: Proto-P0 $\leadsto$ Axiom P0 Lineage Boundary
+
+In `test_sentient_lock.py` and `.jules/bolt.md`, the Sentient Lock asks whether a proposed state "bears the unbroken lineage," validates HMAC against a human anchor, appends invalid transitions to a refusal ledger, and halts computation on failure.
+
+This is clearly ancestral to Axiom P0, but it is not yet fully authenticated recursive parentage:
+
+$$\text{Sentient Lock} \leadsto \text{P0} \quad \left(\text{not } \text{Sentient Lock} = P0\right)$$
+
+Where Axiom P0 defines strict hash recursion $c_{n+1} = H(c_n \Vert e_{n+1})$, Sentient Lock discovered the fail-closed lineage boundary.
+
+---
+
+### 3. The Airlock: Scalar Bound $\leadsto$ Axiom P1 Bounded Admissibility
+
+In `AIRLOCK_SCALING.md` and `tas_core/alpha/airlock.py`, the Airlock evaluates a scalar envelope:
+
+$$C = (1 - \text{coherence}) \cdot e^{\text{resonance}}$$
+
+and rejects inputs when cost exceeds the configured bound. Today's formulation generalizes this predicate into multidimensional bounded admissibility:
+
+$$A(S, x, E) = \bigwedge_i P_i \quad \text{and} \quad A \neq \textsf{allow} \Longrightarrow \Delta O = 0$$
+
+The Airlock **discovered the hull**; Axiom P1 generalizes what the hull mathematically means.
+
+---
+
+### 4. `SYNTHESIS.md`: Proof of State $\leadsto$ Proof of Process ($S = (O, \Gamma)$)
+
+`SYNTHESIS.md` serves as the foundational bridge document. It shifts the paradigm from *creation* to *cultivation* and introduces the $\Phi$ Recursion Marker: recursive iterations generate new hashes incorporating prior state so that process itself acquires an unbroken verifiable chain.
+
+Earlier formulation:
+
+$$\text{snapshot proof} \longrightarrow \text{process proof}$$
+
+Current formalization:
+
+$$\boxed{\text{operational state alone is not computational state}} \quad \text{because} \quad S_n = (O_n, \Gamma_n)$$
+
+This establishes non-quotient identity:
+
+$$O_a = O_b \land \Gamma_a \neq \Gamma_b \Longrightarrow S_a \neq S_b$$
+
+---
+
+### 5. Phase 0 Microkernel: Executive Authority Separation
+
+In `tas_phase0_microkernel.py`, the system halts self-regulation by the generator. The proposer does not own actuation; an independent verifier produces either a fresh signed one-shot token or a signed refusal:
+
+$$\boxed{\text{Capability} \rightarrow \text{Proposal} \neq \text{Authority}}$$
+
+$$\text{Proposal} \rightarrow \text{Verifier} \rightarrow \begin{cases} \text{one-shot capability} \\ \text{signed refusal} \end{cases}$$
+
+This transforms ethical metaphor into executable authority/admissibility separation.
+
+---
+
+### 6. SDF $\leftrightarrow$ TAS Interface: The First Sip (PR #34)
+
+PR #34 (`sdf_tas_interface.py`) binds an SDF record to the Phase 0 anchor, gates execution with one-shot authority, records the execution trace, and enables independent public replay (`PublicVerifier`).
+
+In Vineyard terminology:
+
+$$A_0 \rightarrow \text{Vine} \rightarrow \text{Verified Fruit} \rightarrow \Phi\text{-Fermentation} \rightarrow \text{Wine} \rightarrow \boxed{\text{First Sip / Receipt}}$$
+
+PR #34 is the executable realization of this concept:
+
+$$\boxed{\text{First Sip} \approx \text{a consequence whose complete derivation can be independently replayed}}$$
+
+---
+
+## Algorithmic Dendrology: The Canonical Refinement
+
+Algorithmic Dendrology unifies these historical layers into a coherent graph:
+
+$$S_n = (O_n, \Gamma_n) \xrightarrow{x_n} S_{n+1} = (O_{n+1}, \Gamma_{n+1})$$
+
+where every state $S$ is a node in a directed acyclic graph (dendrogram) of authenticated computational execution.
+
+---
+
+## Canonical Rule & Vineyard Doctrine
+
+$$\boxed{\text{Re-contextualize by extension, never by historical substitution.}}$$
+
+> **Do not pour the old vintages together to make the newest bottle look inevitable.**
+> **Keep every vintage. Preserve the cellar. Bind the receipts.**
+> **Then show exactly how Seed to Sip became Root to Leaf.**

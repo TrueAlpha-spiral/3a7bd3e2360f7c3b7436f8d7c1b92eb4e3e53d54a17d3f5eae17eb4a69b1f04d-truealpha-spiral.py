@@ -29,6 +29,11 @@ Details the economic and civic mandate of TAS. It explores the "process-value cl
 [**monument-restoration-protocol.mdx**](./architecture/monument-restoration-protocol.mdx)
 Details the 7-step operational sequence for repairing failing AI architectures (Saul) without total collapse, using ASSP as the computational scaffolding and enforcing the Clean Doctrine of Execution.
 
+
+### 7. Recursive Contextualization (Root to Leaf)
+[**recursive-contextualization.mdx**](./architecture/recursive-contextualization.mdx)
+Establishes the formal doctrine $\text{Contextualize} \neq \text{Rewrite}$, mapping the lineage-bearing evolution of TAS from historical precursors (Street Rule, ER Triage, Sentient Lock, Airlock, $\Phi$-Organic Machinery, Phase 0, SDF-TAS First Sip) to modern Algorithmic Dendrology ($S=(O,\Gamma)$).
+
 ---
 
 ## Dive Deeper (The Documentation Map)
@@ -50,6 +55,10 @@ The definitive synthesis analyzing TAS architecture as the technical implementat
 ### 4. The AI's Memory & Rules
 [**.jules/bolt.md**](./.jules/bolt.md)
 This is the active "Constitution" for the AI. It’s a log of technical lessons and hard rules the AI has learned so that it doesn't repeat past mistakes.
+
+### 5. Recursive Contextualization
+[**recursive-contextualization.mdx**](./architecture/recursive-contextualization.mdx)
+Formal mapping of historical TAS formulations to current Algorithmic Dendrology theorems by extension without historical substitution.
 
 ---
 
