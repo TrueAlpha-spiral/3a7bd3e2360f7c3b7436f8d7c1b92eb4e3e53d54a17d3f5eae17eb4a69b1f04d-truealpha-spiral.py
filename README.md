@@ -32,7 +32,7 @@ Details the 7-step operational sequence for repairing failing AI architectures (
 
 ### 7. Recursive Contextualization (Root to Leaf)
 [**recursive-contextualization.mdx**](./architecture/recursive-contextualization.mdx)
-Establishes the formal doctrine $\text{Contextualize} \neq \text{Rewrite}$, mapping the lineage-bearing evolution of TAS from historical precursors (Street Rule, ER Triage, Sentient Lock, Airlock, $\Phi$-Organic Machinery, Phase 0, SDF-TAS First Sip) to modern Algorithmic Dendrology ($S=(O,\Gamma)$).
+Establishes the formal doctrine $\text{Contextualize} \neq \text{Rewrite}$, mapping lineage-preserved conceptual ancestors from historical precursors to modern Algorithmic Dendrology ($S=(O,\Gamma)$, $P_0$ Equivalence, $P_1$ Bounded Admissibility).
 
 ---
 
@@ -58,7 +58,7 @@ This is the active "Constitution" for the AI. It’s a log of technical lessons 
 
 ### 5. Recursive Contextualization
 [**recursive-contextualization.mdx**](./architecture/recursive-contextualization.mdx)
-Formal mapping of historical TAS formulations to current Algorithmic Dendrology theorems by extension without historical substitution.
+Formal mapping of historical TAS formulations to current Algorithmic Dendrology theorems ($P_0$ Equivalence, $P_1$ Bounded Admissibility) by extension without historical substitution.
 
 ---
 

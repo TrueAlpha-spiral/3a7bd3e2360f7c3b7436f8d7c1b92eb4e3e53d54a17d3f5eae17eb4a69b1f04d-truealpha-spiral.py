@@ -1,20 +1,28 @@
 # Recursive Contextualization: Root to Leaf
 
-> **This document does not revise prior TAS formulations. It treats them as authenticated conceptual ancestors and maps the derivation by which later formalism emerged from earlier executable constraints.**
+> **This document does not revise prior TAS formulations. It treats them as lineage-preserved conceptual ancestors and maps the derivation by which later formalism emerged from earlier executable constraints.**
 
 ## The Principle: $\text{Contextualize} \neq \text{Rewrite}$
 
-We do not edit historical material to pretend it always spoke in the present vocabulary of Phase 0 ($P0$), Phase 1 ($P1$), $S=(O,\Gamma)$, bounded admissibility, or Algorithmic Dendrology. Doing so would destroy the visible evidence of system evolution. Instead, each historical formulation remains intact at its layer, and this document adds a successor layer explaining what that formulation became.
+We do not edit historical material to pretend it always spoke in the present vocabulary of Phase 0 ($P_0$), Phase 1 ($P_1$), $S=(O,\Gamma)$, bounded admissibility, or Algorithmic Dendrology. Doing so would destroy the visible evidence of system evolution. Instead, each historical formulation remains intact at its layer, and this document adds a successor layer explaining what that formulation became.
 
 Formally, the repository itself is treated as a lineage-bearing object:
 
 $$\mathcal R_n = (T_n, \Gamma_n, \Sigma_n)$$
 
-where $T_n$ is the repository tree at state $n$, $\Gamma_n$ is its parent/commit/PR lineage, and $\Sigma_n$ is the semantic vocabulary available at that stage. Recursive contextualization creates an interpretive successor:
+where $T_n$ is the repository tree at state $n$, $\Gamma_n$ is its parent/commit/PR lineage, and $\Sigma_n$ is the semantic vocabulary available at that stage.
+
+Under Algorithmic Dendrology, lineage $\Gamma$ is immutable while semantic vocabulary $\Sigma$ expands monotonically:
+
+$$\Gamma_{n+1} \supset \Gamma_n \quad \land \quad \Gamma_n \text{ is immutable}$$
+
+$$\Sigma_n \subseteq \Sigma_{n+1}$$
+
+Recursive contextualization creates an interpretive successor:
 
 $$\mathcal R_{n+1} = \mathcal R_n \;\Vert\; \operatorname{Context}(\mathcal R_n, \mathcal C_{\text{current}})$$
 
-without asserting that $\mathcal C_{\text{current}}$ existed verbatim at stage $n$.
+without asserting that $\mathcal C_{\text{current}}$ existed verbatim at stage $n$. Later understanding may extend lineage, but cannot become an ancestor of itself.
 
 ---
 
@@ -41,7 +49,41 @@ The repository distinguishes the **genealogy of the idea** from the **genealogy 
 
 ---
 
+## Formal Axiomatic Hierarchy ($P_0$ & $P_1$)
+
+The mature formalism distinguishes the **Equivalence Axiom ($P_0$)** from the **Admissibility Constraint ($P_1$)**:
+
+### Axiom $P_0$: The Equivalence Axiom
+$$\boxed{P_0: \quad S_a \equiv S_b \iff \Pi(S_a) \equiv \Pi(S_b)}$$
+
+Two identical operational states are not computational equivalent unless their generating process lineages are equivalent:
+
+$$S_a \sim_{\mathcal S} S_b \iff \Gamma_a \equiv \Gamma_b$$
+
+Strict hash recursion ($c_{n+1} = H(c_n \Vert e_{n+1})$) is a structural mechanism satisfying this axiom, rather than the whole definition of $P_0$. Consequently, the projection quotient $\mathcal S / \sim_{\mathcal O} \cong \mathcal O$ is strictly lossy and invalidates future transition admissibility.
+
+### Axiom $P_1$: The Admissibility Constraint
+$$\boxed{P_1: \quad A(S, x, E) = 1 \iff \bigwedge_i P_i(S, x, E)}$$
+
+A process step exists if and only if every predicate requirement is satisfied. On refusal:
+
+$$\neg A(S, x, E) \Longrightarrow \Delta O = 0$$
+
+---
+
 ## Ancestor-to-Successor Derivations
+
+### Ancestry Pipeline
+$$\begin{aligned}
+\text{Sentient Lock} &\leadsto \text{fail-closed provenance constraint} \\
+&\leadsto \text{recursive lineage identity} \\
+&\leadsto P_0 \text{ Equivalence} \\[4pt]
+\text{Airlock} &\leadsto \text{bounded scalar acceptance} \\
+&\leadsto \text{multidimensional predicate intersection} \\
+&\leadsto P_1 \text{ Admissibility}
+\end{aligned}$$
+
+---
 
 ### 1. Phoenix Protocol: Rollback $\leadsto$ Authenticated Branch Retargeting
 
@@ -57,19 +99,19 @@ The original implementation remains untouched as evidence of the earlier stage. 
 
 ---
 
-### 2. Sentient Lock: Proto-P0 $\leadsto$ Axiom P0 Lineage Boundary
+### 2. Sentient Lock: Proto-$P_0$ $\leadsto$ Fail-Closed Provenance Constraint
 
 In `test_sentient_lock.py` and `.jules/bolt.md`, the Sentient Lock asks whether a proposed state "bears the unbroken lineage," validates HMAC against a human anchor, appends invalid transitions to a refusal ledger, and halts computation on failure.
 
-This is clearly ancestral to Axiom P0, but it is not yet fully authenticated recursive parentage:
+This is ancestral to Axiom $P_0$:
 
-$$\text{Sentient Lock} \leadsto \text{P0} \quad \left(\text{not } \text{Sentient Lock} = P0\right)$$
+$$\text{Sentient Lock} \leadsto \text{fail-closed provenance constraint} \leadsto P_0 \text{ Equivalence}$$
 
-Where Axiom P0 defines strict hash recursion $c_{n+1} = H(c_n \Vert e_{n+1})$, Sentient Lock discovered the fail-closed lineage boundary.
+Sentient Lock discovered the fail-closed lineage boundary, which evolved into full recursive lineage identity under Axiom $P_0$.
 
 ---
 
-### 3. The Airlock: Scalar Bound $\leadsto$ Axiom P1 Bounded Admissibility
+### 3. The Airlock: Scalar Bound $\leadsto$ Axiom $P_1$ Bounded Admissibility
 
 In `AIRLOCK_SCALING.md` and `tas_core/alpha/airlock.py`, the Airlock evaluates a scalar envelope:
 
@@ -77,9 +119,9 @@ $$C = (1 - \text{coherence}) \cdot e^{\text{resonance}}$$
 
 and rejects inputs when cost exceeds the configured bound. Today's formulation generalizes this predicate into multidimensional bounded admissibility:
 
-$$A(S, x, E) = \bigwedge_i P_i \quad \text{and} \quad A \neq \textsf{allow} \Longrightarrow \Delta O = 0$$
+$$A(S, x, E) = \bigwedge_i P_i \quad \text{and} \quad \neg A(S, x, E) \Longrightarrow \Delta O = 0$$
 
-The Airlock **discovered the hull**; Axiom P1 generalizes what the hull mathematically means.
+The Airlock **discovered the hull**; Axiom $P_1$ generalizes what the hull mathematically means.
 
 ---
 
@@ -95,7 +137,7 @@ Current formalization:
 
 $$\boxed{\text{operational state alone is not computational state}} \quad \text{because} \quad S_n = (O_n, \Gamma_n)$$
 
-This establishes non-quotient identity:
+This establishes non-quotient state identity:
 
 $$O_a = O_b \land \Gamma_a \neq \Gamma_b \Longrightarrow S_a \neq S_b$$
 
