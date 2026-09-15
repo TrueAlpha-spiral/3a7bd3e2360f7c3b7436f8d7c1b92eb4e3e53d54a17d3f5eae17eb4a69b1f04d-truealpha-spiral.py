@@ -31,19 +31,19 @@ without asserting that $\mathcal C_{\text{current}}$ existed verbatim at stage $
 The repository distinguishes the **genealogy of the idea** from the **genealogy of the Git object**:
 
 1. **The Conceptual Pre-Root (`.jules/bolt.md`):** The May 22–23, 2024 optimization experiments established that performance acceleration is only admissible when strict invariant validation survives it. By February 2026, this matured into the Sentient Lock doctrine: *optimization is a privilege conditioned on enforceable verification*.
-2. **The Git Repository Root (`tas_dna_pilot.py`):** The accessible commit genealogy reaches December 6, 2025 (commit titled "The beginning"), where `TAS_DNA` and the `ERTriagePilot` were initialized.
+2. **The Git Repository Root (`tas_dna_pilot.py`):** The accessible commit genealogy reaches December 6, 2025 (commit titled "The beginning"), where `ERTriagePilot` was initialized.
 
 ### Lineage Mapping
 
 | Historical Layer | What the Repository Actually Contains | Present-Day Contextualization |
 | :--- | :--- | :--- |
 | **Street Rule** | Fast path permitted only with validation | **Proto-admissibility** |
-| **ER Triage / TAS_DNA** | Explicit state, TVD drift, attested checkpoint, Phoenix rollback | **Proto-state geometry and recovery** |
+| **ER Triage (`ERTriagePilot`)** | Explicit state, TVD drift, attested checkpoint, Phoenix rollback | **Proto-state geometry and recovery** |
 | **Sentient Lock** | HMAC lineage check, refusal ledger, compute halt | **Proto-P0 / fail-closed lineage boundary** |
 | **Airlock** | State/input accepted or denied by bounded mathematical cost | **Scalar precursor to P1 bounded admissibility** |
 | **$\Phi$ / Organic Machinery** | Proof of State becomes Proof of Process; next hash incorporates previous state | **Precursor to constitutive lineage $\Gamma$** |
 | **Phase 0** | Genesis anchor, independent verifier, one-shot authority, signed refusal | **Executable authority/admissibility separation** |
-| **SDF $\leftrightarrow$ TAS** | Witness $\rightarrow$ anchor $\rightarrow$ gate $\rightarrow$ actuator $\rightarrow$ receipt $\rightarrow$ public replay | **First end-to-end cursive transition** |
+| **SDF $\leftrightarrow$ TAS** | Witness $\rightarrow$ anchor $\rightarrow$ gate $\rightarrow$ actuator $\rightarrow$ receipt $\rightarrow$ shared-secret receipt validation | **First end-to-end cursive transition** |
 | **Current Formalism** | $S=(O,\Gamma)$, P0/P1, non-quotient identity, recursive admissibility | **Algorithmic Dendrology** |
 | **Future** | Authenticated agents instantiated from valid tips | **Leaves** |
 
@@ -157,7 +157,7 @@ This transforms ethical metaphor into executable authority/admissibility separat
 
 ### 6. SDF $\leftrightarrow$ TAS Interface: The First Sip (PR #34)
 
-PR #34 (`sdf_tas_interface.py`) binds an SDF record to the Phase 0 anchor, gates execution with one-shot authority, records the execution trace, and enables independent public replay (`PublicVerifier`).
+PR #34 (`sdf_tas_interface.py`) binds an SDF record to the Phase 0 anchor, gates execution with one-shot authority, records the execution trace, and enables shared-secret structural validation of signed receipts (`PublicVerifier`).
 
 In Vineyard terminology:
 
@@ -165,7 +165,7 @@ $$A_0 \rightarrow \text{Vine} \rightarrow \text{Verified Fruit} \rightarrow \Phi
 
 PR #34 is the executable realization of this concept:
 
-$$\boxed{\text{First Sip} \approx \text{a consequence whose complete derivation can be independently replayed}}$$
+$$\boxed{\text{First Sip} \approx \text{a consequence whose signed derivation can be structurally validated with shared verifier secrets}}$$
 
 ---
 
