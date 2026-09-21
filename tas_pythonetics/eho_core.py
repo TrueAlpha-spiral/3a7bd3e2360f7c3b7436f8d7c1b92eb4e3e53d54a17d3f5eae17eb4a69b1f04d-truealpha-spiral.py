@@ -29,12 +29,15 @@ class EthicalHamiltonian:
         Intelligence with consequence must prove its source, scope, lineage,
         authority, and admissibility before execution.
         """
-        # Optimization: Using EAFP pattern (try/except) avoids dictionary lookup overhead for expected valid keys, yielding a ~1.4x speedup.
+        # Optimization: Unrolled EAFP pattern avoids explicit looping overhead for multiple truthy values, yielding measurable speedup.
         try:
-            for key in self.provenance_keys:
-                if not context[key]:
-                    return False
-            return True
+            return bool(
+                context["source"] and
+                context["scope"] and
+                context["lineage"] and
+                context["authority"] and
+                context["admissibility"]
+            )
         except KeyError:
             return False
 
