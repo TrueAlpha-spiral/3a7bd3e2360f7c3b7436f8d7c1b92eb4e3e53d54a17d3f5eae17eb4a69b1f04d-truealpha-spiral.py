@@ -108,3 +108,6 @@
 ## 2026-07-27 - Defer Cryptographic Validation
 **Learning:** In the TAS architecture, validating cryptographic signatures (like `capsule_hash()`, which uses JSON serialization and SHA-256) is computationally expensive. Performing these checks before evaluating cheap logical preconditions (like O(1) dictionary lookups) causes massive unnecessary overhead for invalid requests.
 **Action:** Always place cheap logical preconditions before expensive cryptographic validation in verification flows (e.g., `verify_transaction`) to fail fast on invalid states and save computation.
+## 2026-09-02 - Defer Cryptographic Validation
+**Learning:** In the TAS architecture, validating cryptographic signatures (like `capsule_hash()`, which uses JSON serialization and SHA-256) is computationally expensive. Performing these checks before evaluating cheap logical preconditions (like O(1) dictionary lookups) causes massive unnecessary overhead for invalid requests.
+**Action:** Always place cheap logical preconditions before expensive cryptographic validation in verification flows (e.g., `verify_transaction`) to fail fast on invalid states and save computation.

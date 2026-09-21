@@ -453,6 +453,9 @@ class PublicVerifier:
             if execution_ledger_receipt["execution_trace_hash"] != execution_trace["trace_hash"]:
                 return False
 
+            if execution_trace["status"] not in ("EXECUTED", "REFUSED"):
+                return False
+
             # Optimization: Defer expensive capsule_hash() until after cheap dictionary checks
             if capsule.capsule_hash() != rec_hash:
                 return False
