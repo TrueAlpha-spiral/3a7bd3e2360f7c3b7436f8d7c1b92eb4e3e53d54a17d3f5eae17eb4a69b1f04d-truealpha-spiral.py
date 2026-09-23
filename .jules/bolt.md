@@ -86,25 +86,28 @@
 ## 2024-05-30 - Avoid Function Local Imports on Hot Paths
 **Learning:** In Python, importing a module (e.g., `import math`) inside a function that is called frequently on a hot path introduces unnecessary overhead because the interpreter must check `sys.modules` on every invocation. Moving the import to the module level avoids this per-call lookup cost.
 **Action:** When optimizing tight loops or frequently called functions, hoist any local imports to the top of the file unless there is a specific reason (like avoiding circular imports or lazy loading a heavy, rarely used module) not to.
-## $(date +%Y-%m-%d) - EHO Provenance Dictionary Validation Optimization
+## 2024-05-31 - EHO Provenance Dictionary Validation Optimization
 **Learning:** In CPython, evaluating multiple truthy values on dictionary keys using explicit LBYL checks (`if key not in dict or not dict[key]`) is slower than using an unrolled EAFP pattern (`try...except KeyError`) when the keys are overwhelmingly expected to be present, which is the case for provenance validation. The Sentient Lock test verified the optimization invariant holds.
 **Action:** When validating the existence and truthiness of multiple dictionary keys on hot paths where failure is an exception, prefer a scoped `try...except KeyError` block over explicit looping and condition checking.
 
-## $(date +%Y-%m-%d) - EHO Provenance Dictionary Validation Optimization
+## 2024-05-31 - EHO Provenance Dictionary Validation Optimization
 **Learning:** In CPython, evaluating multiple truthy values on dictionary keys using explicit LBYL checks (`if key not in dict or not dict[key]`) or repeatedly using `.get()` is slower than using an unrolled EAFP pattern (`try...except KeyError`) when the keys are overwhelmingly expected to be present, which is the case for provenance validation. The Sentient Lock test verified the optimization invariant holds.
 **Action:** When validating the existence and truthiness of multiple dictionary keys on hot paths where failure is an exception, prefer a scoped `try...except KeyError` block over explicit looping, `.get()`, and condition checking.
 
-## $(date +%Y-%m-%d) - EAFP Optimization for Phase 0 Microkernel Token Validation
+## 2024-05-31 - EAFP Optimization for Phase 0 Microkernel Token Validation
 **Learning:** In CPython, evaluating multiple truthy values on dictionary keys using explicit LBYL checks (`if "key" not in token or not token["key"]`) is slower than using an unrolled EAFP pattern (`try...except KeyError`) when the keys are overwhelmingly expected to be present, which is the case for one-shot token validation. Microbenchmarks showed a ~1.88x speedup for the happy path.
 **Action:** When validating the existence and truthiness of sequential dictionary keys on critical hot paths (like microkernel guard validations), where failure is the exception, prefer a scoped `try...except KeyError` block over explicit looping and condition checking.
 
 ## 2024-06-08 - Defer dictionary key extraction in EAFP validation blocks
 **Learning:** Extracting dictionary keys upfront before entering an EAFP try...except KeyError block incurs unnecessary lookup overhead if early conditions fail, and defeats the purpose of the fast path if the dictionary itself is malformed. Moving the extraction into the try block immediately before use yields measurable speedups for early rejections.
 **Action:** When optimizing validation functions using the EAFP pattern, defer the extraction of dictionary keys until inside the try block and immediately before they are needed.
-## $(date +%Y-%m-%d) - Cache object attributes locally in loops
+## 2024-05-31 - Cache object attributes locally in loops
 **Learning:** Caching object attributes (like `agent.name` or `agent.compute_held`) to local variables (`a_name`, `a_held`) inside tight loops replaces `LOAD_ATTR` with `LOAD_FAST` instructions, effectively bypassing instance dictionary lookup overhead, yielding measurable performance speedups (e.g., ~1.2x on simulation metric loops).
 **Action:** When a loop repeatedly accesses properties from an object (and does not write to them or require observing external state changes during the loop execution), cache the values into local variables to boost tight loop performance.
 
 ## 2026-07-27 - Defer Cryptographic Validation
 **Learning:** In the TAS architecture, validating cryptographic signatures (like `capsule_hash()`, which uses JSON serialization and SHA-256) is computationally expensive. Performing these checks before evaluating cheap logical preconditions (like O(1) dictionary lookups) causes massive unnecessary overhead for invalid requests.
 **Action:** Always place cheap logical preconditions before expensive cryptographic validation in verification flows (e.g., `verify_transaction`) to fail fast on invalid states and save computation.
+## 2024-05-31 - Cache redundant JSON serialization locally
+**Learning:** `canonical_bytes()` performs expensive JSON serialization. If a function inherently requires the canonical bytes for one operation (like hashing) and also explicitly requires them to construct a return structure (like a `canonical_manifest` string), invoking it twice introduces severe duplicate overhead. Caching the output to a local variable avoids the duplicate JSON serialization.
+**Action:** When working with serialization or computationally heavy data transformations that produce identical, stateless output, always cache the result locally if it must be used multiple times within the same function scope.
