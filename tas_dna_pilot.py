@@ -52,8 +52,7 @@ class ERTriagePilot:
         # Optimization: Iterate over cached tuple instead of calling dict.items() which creates a view
         for category, baseline_prob in self.baseline_items:
             # Optimized: Direct dict access is faster than .get()
-            current_prob = counts[category] / total
-            l1_distance += abs(current_prob - baseline_prob)
+            l1_distance += abs((counts[category] / total) - baseline_prob)
 
         return 0.5 * l1_distance
 
