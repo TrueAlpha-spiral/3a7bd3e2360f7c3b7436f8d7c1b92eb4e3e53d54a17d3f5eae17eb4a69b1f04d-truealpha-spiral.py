@@ -168,39 +168,48 @@ def verify_action(
     it only emits an allow token that an external guard can verify, or a signed
     refusal receipt proving no token was issued.
     """
-    # Optimization: Avoids function call overhead, ~2.5x speedup
+    # Optimization: Localize proposal attributes to avoid repeated LOAD_ATTR instructions
+    p_id = proposal.proposal_id
+    p_action = proposal.action
+    p_nonce = proposal.nonce
+    p_counter = proposal.counter
+    p_attest = proposal.attestation_digest
+    p_policy = proposal.policy_hash
+    p_prev = proposal.previous_receipt_hash
+    p_snap = proposal.snapshot_id
+
     proposal_payload = {
-        "proposal_id": proposal.proposal_id,
-        "action": proposal.action,
-        "nonce": proposal.nonce,
-        "counter": proposal.counter,
-        "attestation_digest": proposal.attestation_digest,
-        "policy_hash": proposal.policy_hash,
-        "previous_receipt_hash": proposal.previous_receipt_hash,
-        "snapshot_id": proposal.snapshot_id,
+        "proposal_id": p_id,
+        "action": p_action,
+        "nonce": p_nonce,
+        "counter": p_counter,
+        "attestation_digest": p_attest,
+        "policy_hash": p_policy,
+        "previous_receipt_hash": p_prev,
+        "snapshot_id": p_snap,
     }
     proposal_digest = digest_payload(proposal_payload)
 
     refusal_reason = None
-    if proposal.action not in policy.allowed_actions:
+    if p_action not in policy.allowed_actions:
         refusal_reason = "action not allowed by policy"
-    elif proposal.attestation_digest != policy.expected_attestation_digest:
+    elif p_attest != policy.expected_attestation_digest:
         refusal_reason = "attestation digest mismatch"
-    elif proposal.policy_hash != policy.expected_policy_hash:
+    elif p_policy != policy.expected_policy_hash:
         refusal_reason = "policy hash mismatch"
-    elif proposal.counter < policy.minimum_counter:
+    elif p_counter < policy.minimum_counter:
         refusal_reason = "counter below policy minimum"
 
     base_receipt = {
         "phase": PHASE,
-        "proposal_id": proposal.proposal_id,
+        "proposal_id": p_id,
         "proposal_digest": proposal_digest,
-        "nonce": proposal.nonce,
-        "counter": proposal.counter,
-        "policy_hash": proposal.policy_hash,
-        "attestation_digest": proposal.attestation_digest,
-        "previous_receipt_hash": proposal.previous_receipt_hash,
-        "snapshot_id": proposal.snapshot_id,
+        "nonce": p_nonce,
+        "counter": p_counter,
+        "policy_hash": p_policy,
+        "attestation_digest": p_attest,
+        "previous_receipt_hash": p_prev,
+        "snapshot_id": p_snap,
     }
 
     if refusal_reason:
