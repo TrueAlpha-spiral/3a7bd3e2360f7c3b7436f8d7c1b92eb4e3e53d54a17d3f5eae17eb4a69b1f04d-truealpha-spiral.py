@@ -150,8 +150,8 @@ class SDFRegistryAPI:
         return entry
 
     def query_record(self, record_id: str) -> List[Dict[str, Any]]:
-        # Optimization: In CPython tight loops, using native `in` and `[]` access is ~1.25x faster than `.get()` because it avoids function call overhead.
-        return [entry for entry in self.ledger if "record_id" in entry and entry["record_id"] == record_id]
+        # Optimization: In CPython tight loops, using direct key indexing is faster when all ledger entries are initialized with record_id.
+        return [entry for entry in self.ledger if entry["record_id"] == record_id]
 
     @staticmethod
     def _require_non_empty(value: Any, message: str) -> None:
@@ -437,10 +437,9 @@ class PublicVerifier:
                 return False
 
             gateway_receipt = transaction["gateway_receipt"]
-            if gateway_receipt["status"] in (ALLOW_STATUS, DENY_STATUS):
-                if gateway_receipt["record_hash"] != rec_hash:
-                    return False
-                if gateway_receipt["anchor_hash"] != anc_hash:
+            gw_status = gateway_receipt["status"]
+            if gw_status == ALLOW_STATUS or gw_status == DENY_STATUS:
+                if gateway_receipt["record_hash"] != rec_hash or gateway_receipt["anchor_hash"] != anc_hash:
                     return False
             else:
                 return False

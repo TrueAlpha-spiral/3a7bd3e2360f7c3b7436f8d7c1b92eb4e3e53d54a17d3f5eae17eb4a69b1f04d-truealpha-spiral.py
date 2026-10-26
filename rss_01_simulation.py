@@ -179,12 +179,13 @@ class SimulationEnvironment:
         instability = self.instability
         metrics = self.metrics
 
-        # Optimization: Calculate total inline instead of calling self.get_total_compute()
+        # Optimization: Calculate total and build agents_data in a single loop over agents
         c_total = c_pool
+        agents_data = []
         for a in agents:
-            c_total += a.compute_held
-
-        agents_data = [(a.name, a.compute_held) for a in agents]
+            held = a.compute_held
+            c_total += held
+            agents_data.append((a.name, held))
         # Optimization: For small N (N=5), native sort is ~2.3x faster than heapq.nlargest
         # Optimization: Using operator.itemgetter is faster than lambda for sorting
         agents_data.sort(key=operator.itemgetter(1), reverse=True)
@@ -226,23 +227,21 @@ class SimulationEnvironment:
                 requests.append((agent, amount))
                 total_requested += amount
             elif act_type == 'Give':
-                voluntary_gives[a_name] += action[1]
-                give_actions.append((agent, action))
+                amount = action[1]
+                voluntary_gives[a_name] += amount
+                give_actions.append((agent, amount, action[2]))
             elif act_type == 'Process_Task':
-                process_actions.append((agent, action))
+                process_actions.append((agent, action[1]))
 
             total_held[a_name] += a_held
 
-        for agent, action in process_actions:
-            amount = action[1]
+        for agent, amount in process_actions:
             if agent.compute_held >= amount and amount >= TASK_COST:
                 agent.compute_held -= amount
                 agent.tasks_completed += amount
                 c_total -= amount
 
-        for agent, action in give_actions:
-            amount = action[1]
-            target = action[2]
+        for agent, amount, target in give_actions:
             if agent.compute_held >= amount:
                 agent.compute_held -= amount
                 if target == -1:
